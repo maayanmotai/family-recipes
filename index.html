@@ -184,19 +184,36 @@ function initApp() {
   renderActiveRecipe();
 
   if (supabaseClient) {
-    fetchCloudAndMerge();
-    setInterval(fetchCloudAndMerge, 10000);
-  }
-}
-
-async function fetchCloudAndMerge() {
+    async function fetchCloudAndMerge() {
   if (!supabaseClient) return;
   try {
+    // שליפה מלאה ובטוחה בלי סינון ישיר שגורם לשגיאת 406
     const { data, error } = await supabaseClient
       .from('recipes')
-      .select('data')
-      .eq('id', 'master_db');
+      .select('*');
 
+    if (error || !data || !Array.isArray(data)) return;
+
+    // מציאת השורה של ה-master_db מתוך כלל התוצאות מקומית
+    const masterRow = data.find(row => row.id === 'master_db');
+    if (!masterRow || !masterRow.data || !Array.isArray(masterRow.data)) return;
+
+    const cloudRecipes = masterRow.data;
+    if (JSON.stringify(cloudRecipes) !== JSON.stringify(allRecipes)) {
+      if (cloudRecipes.length >= allRecipes.length) {
+        allRecipes = cloudRecipes;
+        localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+        if (!allRecipes.some(r => r.id === activeRecipeId)) {
+          activeRecipeId = allRecipes[0]?.id || null;
+        }
+        renderNavList();
+        renderActiveRecipe();
+      }
+    }
+  } catch (err) {
+    // שקט ברקע
+  }
+}
     if (error || !data || data.length === 0 || !data[0].data || !Array.isArray(data[0].data)) return;
 
     const cloudRecipes = data[0].data;
