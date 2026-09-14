@@ -459,29 +459,9 @@ function importData(event) {
 }
 
 // Safe Cloud Synchronization (Prevents overwrite loops & 406 errors)
-async function loadRecipesFromCloud() {
-  if (!supabaseClient) return;
-  try {
-    const { data } = await supabaseClient
-      .from('recipes')
-      .select('data')
-      .eq('id', 'master_db');
-    
-    // טען מהענן רק אם המאגר המקומי ריק לחלוטין
-    const localData = localStorage.getItem('my_recipes_db');
-    if (data && data.length > 0 && data[0].data && Array.isArray(data[0].data)) {
-      if (!localData) {
-        allRecipes = data[0].data;
-        localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-        renderNavList();
-        renderActiveRecipe();
-      }
-    }
-  } catch(err) {
-    console.warn('Cloud load error:', err);
-  }
-}
-function loadFromLocalFallback() {
+
+    // Local First Storage & Background Cloud Backup
+function loadRecipesFromCloud() {
   try {
     const saved = localStorage.getItem('my_recipes_db');
     if (saved) {
@@ -490,7 +470,9 @@ function loadFromLocalFallback() {
         allRecipes = parsed;
       }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.warn('Local load error:', e);
+  }
   renderNavList();
   renderActiveRecipe();
 }
@@ -506,12 +488,8 @@ async function saveRecipesToCloud() {
   }
 }
 
-// Initial load
-loadFromLocalFallback();
-if (supabaseClient) {
-  loadRecipesFromCloud();
-  setInterval(loadRecipesFromCloud, 5000);
-}
+// Initial load purely from local state to prevent any wipes
+loadRecipesFromCloud();
 </script>
 
 <!-- Modal: Add New Recipe -->
