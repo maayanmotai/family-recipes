@@ -160,12 +160,10 @@ let activeRecipeId = null;
 let currentCategory = 'all';
 let currentScale = 1.0;
 let beefFatPercent = 15;
-let isSyncing = false;
 
-// --- ארכיטקטורת אמת לאמיתה (Root Architecture: Robust Local-First Sync) ---
+// --- Clean Root Architecture: Local-First with Safe Lazy Sync ---
 
 function initApp() {
-  // 1. טעינה ראשונית אך ורק מזיכרון מקומי מוגן למניעת איפוס בעלייה
   try {
     const saved = localStorage.getItem('my_recipes_db');
     if (saved) {
@@ -175,7 +173,7 @@ function initApp() {
       }
     }
   } catch (e) {
-    console.warn('Local storage read error:', e);
+    console.warn('Local read error:', e);
   }
 
   if (!activeRecipeId || !allRecipes.some(r => r.id === activeRecipeId)) {
@@ -185,33 +183,25 @@ function initApp() {
   renderNavList();
   renderActiveRecipe();
 
-  // 2. הפעלת סנכרון מול הענן ברקע רק לאחר טעינת ממשק יציבה
   if (supabaseClient) {
-    pullFromCloudAndMerge();
-    setInterval(pullFromCloudAndMerge, 7000); // בדיקה כל 7 שניות בצורה רגועה
+    fetchCloudAndMerge();
+    setInterval(fetchCloudAndMerge, 10000);
   }
 }
 
-// משיכה מהענן ומיזוג חכם למניעת דריסה
-async function pullFromCloudAndMerge() {
-  if (isSyncing || !supabaseClient) return;
+async function fetchCloudAndMerge() {
+  if (!supabaseClient) return;
   try {
     const { data, error } = await supabaseClient
       .from('recipes')
       .select('data')
-      .eq('id', 'master_db')
-      .single();
+      .eq('id', 'master_db');
 
-    if (error || !data || !data.data || !Array.isArray(data.data)) return;
+    if (error || !data || data.length === 0 || !data[0].data || !Array.isArray(data[0].data)) return;
 
-    const cloudRecipes = data.data;
-    const localJson = JSON.stringify(allRecipes);
-    const cloudJson = JSON.stringify(cloudRecipes);
-
-    // אם הענן שונה מהמקומי, נקבע לפי הכמות או נעדכן בזהירות
-    if (cloudJson !== localJson) {
-      // אם בענן יש יותר מתכונים או שהמקומי היה במצב ברירת מחדל ריק/ראשוני, נקבל את הענן
-      if (cloudRecipes.length >= allRecipes.length || allRecipes.length === 1 && allRecipes[0].id === 'patties') {
+    const cloudRecipes = data[0].data;
+    if (JSON.stringify(cloudRecipes) !== JSON.stringify(allRecipes)) {
+      if (cloudRecipes.length >= allRecipes.length) {
         allRecipes = cloudRecipes;
         localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
         if (!allRecipes.some(r => r.id === activeRecipeId)) {
@@ -221,32 +211,22 @@ async function pullFromCloudAndMerge() {
         renderActiveRecipe();
       }
     }
-  } catch (err) {
-    // התעלמות שקטה משגיאות רשת זמניות כדי לא לפגוע בחוויית המשתמש
-  }
+  } catch (err) {}
 }
 
-// שמירה לענן בצורה בטוחה ואטומית
-async function persistAndPushToCloud() {
-  isSyncing = true;
+async function persistToCloud() {
+  if (!supabaseClient) return;
   try {
-    // שמירה מקומית מיידית
     localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-    
-    // דחיפה לענן
-    if (supabaseClient) {
-      await supabaseClient
-        .from('recipes')
-        .upsert({ id: 'master_db', data: allRecipes });
-    }
+    await supabaseClient
+      .from('recipes')
+      .upsert({ id: 'master_db', data: allRecipes });
   } catch (err) {
-    console.error('Persistence error:', err);
-  } finally {
-    setTimeout(() => { isSyncing = false; }, 1000);
+    console.warn('Cloud persistence warning:', err);
   }
 }
 
-// --- פונקציות ממשק משתמש וניהול מתכונים ---
+// --- פונקציות ממשק ---
 
 function renderNavList() {
   const navEl = document.getElementById('recipe-list-nav');
@@ -510,7 +490,7 @@ function saveNewRecipe(e) {
     activeRecipeId = newRecipe.id;
   }
 
-  persistAndPushToCloud();
+  persistToCloud();
   closeAddModal();
   document.getElementById('new-recipe-form').reset();
   currentScale = 1.0;
@@ -537,7 +517,7 @@ function importData(event) {
         allRecipes = data;
         activeRecipeId = allRecipes[0]?.id;
         currentScale = 1.0;
-        persistAndPushToCloud();
+        persistToCloud();
         renderNavList();
         renderActiveRecipe();
         alert('המאגר יובא בהצלחה!');
