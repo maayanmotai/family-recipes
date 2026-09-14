@@ -461,6 +461,7 @@ function importData(event) {
 // Safe Cloud Synchronization (Prevents overwrite loops & 406 errors)
 
     // Local First Storage & Background Cloud Backup
+// Smart Auto-Sync: Local First with background updates
 function loadRecipesFromCloud() {
   try {
     const saved = localStorage.getItem('my_recipes_db');
@@ -470,11 +471,31 @@ function loadRecipesFromCloud() {
         allRecipes = parsed;
       }
     }
-  } catch(e) {
-    console.warn('Local load error:', e);
-  }
+  } catch(e) {}
   renderNavList();
   renderActiveRecipe();
+}
+
+async function syncChangesFromCloud() {
+  if (!supabaseClient) return;
+  try {
+    const { data } = await supabaseClient
+      .from('recipes')
+      .select('data')
+      .eq('id', 'master_db');
+    
+    if (data && data.length > 0 && data[0].data && Array.isArray(data[0].data)) {
+      // אם מה שיש בענן שונה ממה שיש אצלנו, נעדכן את המסך והזיכרון
+      if (JSON.stringify(data[0].data) !== JSON.stringify(allRecipes)) {
+        allRecipes = data[0].data;
+        localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+        renderNavList();
+        renderActiveRecipe();
+      }
+    }
+  } catch(err) {
+    console.warn('Sync error:', err);
+  }
 }
 
 async function saveRecipesToCloud() {
@@ -488,8 +509,11 @@ async function saveRecipesToCloud() {
   }
 }
 
-// Initial load purely from local state to prevent any wipes
+// Initial load & background sync every 5 seconds
 loadRecipesFromCloud();
+if (supabaseClient) {
+  setInterval(syncChangesFromCloud, 5000);
+}
 </script>
 
 <!-- Modal: Add New Recipe -->
