@@ -163,6 +163,8 @@ let beefFatPercent = 15;
 
 // --- Clean Root Architecture: Local-First with Safe Lazy Sync ---
 
+// --- Clean Root Architecture: Absolute Protected Local-First Sync ---
+
 function initApp() {
   try {
     const saved = localStorage.getItem('my_recipes_db');
@@ -183,33 +185,58 @@ function initApp() {
   renderNavList();
   renderActiveRecipe();
 
+  // הפעלת סנכרון ענן רק לאחר השהייה בטוחה של 3 שניות בעליית הדף למניעת דריסה מוקדמת
   if (supabaseClient) {
-    async function fetchCloudAndMerge() {
+    setTimeout(() => {
+      fetchCloudAndMerge();
+      setInterval(fetchCloudAndMerge, 10000);
+    }, 3000);
+  }
+}
+
+async function fetchCloudAndMerge() {
   if (!supabaseClient) return;
   try {
-    // שליפה מלאה ובטוחה בלי סינון ישיר שגורם לשגיאת 406
     const { data, error } = await supabaseClient
       .from('recipes')
       .select('*');
 
     if (error || !data || !Array.isArray(data)) return;
 
-    // מציאת השורה של ה-master_db מתוך כלל התוצאות מקומית
     const masterRow = data.find(row => row.id === 'master_db');
     if (!masterRow || !masterRow.data || !Array.isArray(masterRow.data)) return;
 
     const cloudRecipes = masterRow.data;
+    
+    // הגנה קשיחה: לעולם אל תדרוס אם בענן יש פחות מתכונים מהזיכרון המקומי (מונע איפוס טוטאלי)
+    if (cloudRecipes.length < allRecipes.length) return;
+
     if (JSON.stringify(cloudRecipes) !== JSON.stringify(allRecipes)) {
-      if (cloudRecipes.length >= allRecipes.length) {
-        allRecipes = cloudRecipes;
-        localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-        if (!allRecipes.some(r => r.id === activeRecipeId)) {
-          activeRecipeId = allRecipes[0]?.id || null;
-        }
-        renderNavList();
-        renderActiveRecipe();
+      allRecipes = cloudRecipes;
+      localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+      if (!allRecipes.some(r => r.id === activeRecipeId)) {
+        activeRecipeId = allRecipes[0]?.id || null;
       }
+      renderNavList();
+      renderActiveRecipe();
     }
+  } catch (err) {}
+}
+
+async function persistToCloud() {
+  if (!supabaseClient) return;
+  try {
+    // שמירה מקומית מיידית כבסיס אמת
+    localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+    
+    // שליחה לענן
+    await supabaseClient
+      .from('recipes')
+      .upsert({ id: 'master_db', data: allRecipes });
+  } catch (err) {
+    console.warn('Cloud persistence warning:', err);
+  }
+}
   } catch (err) {
     // שקט ברקע
   }
