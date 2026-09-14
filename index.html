@@ -393,19 +393,19 @@ function initApp() {
   }
 }
 
+// ** השדרוג של שלב 2: פונקציה מהירה שמושכת רק שורה אחת! **
 async function fetchCloudAndMerge() {
   if (!supabaseClient) return;
   try {
     const { data, error } = await supabaseClient
       .from('recipes')
-      .select('*');
+      .select('*')
+      .eq('id', 'master_db')
+      .maybeSingle();
 
-    if (error || !data || !Array.isArray(data) || data.length === 0) return;
+    if (error || !data || !data.data || !Array.isArray(data.data)) return;
 
-    const latestRow = data[data.length - 1];
-    if (!latestRow || !latestRow.data || !Array.isArray(latestRow.data)) return;
-
-    const cloudRecipes = latestRow.data;
+    const cloudRecipes = data.data;
     const localJson = JSON.stringify(allRecipes);
     const cloudJson = JSON.stringify(cloudRecipes);
 
@@ -425,7 +425,6 @@ async function persistToCloud() {
   if (!supabaseClient) return;
   try {
     localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-    // הוספת ה-await מוודאת שהתהליך יסתיים כראוי ללא בעיות Race Condition
     await supabaseClient
       .from('recipes')
       .upsert({ id: 'master_db', data: allRecipes });
@@ -639,7 +638,7 @@ function openEditModal(id) {
 
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
 
-// פונקציית מחיקת מתכון חדשה עם אישור
+// פונקציית מחיקת מתכון
 async function deleteRecipe(id) {
   const confirmed = confirm("האם אתה בטוח שברצונך למחוק את המתכון הזה לצמיתות?");
   if (confirmed) {
@@ -647,7 +646,6 @@ async function deleteRecipe(id) {
     if (activeRecipeId === id) {
       activeRecipeId = allRecipes.length > 0 ? allRecipes[0].id : null;
     }
-    // שימוש ב-await מבטיח שהמחיקה תישמר לענן לפני רינדור מחדש
     await persistToCloud();
     renderNavList();
     renderActiveRecipe();
@@ -696,7 +694,6 @@ async function saveNewRecipe(e) {
       activeRecipeId = editId;
     }
   } else {
-    // יצירת ID חזק יותר כדי למנוע התנגשויות (שימוש ב-crypto)
     const newId = 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now());
     const newRecipe = {
       id: newId,
@@ -714,7 +711,6 @@ async function saveNewRecipe(e) {
     activeRecipeId = newRecipe.id;
   }
 
-  // הוספת ה-await לשמירה תקינה
   await persistToCloud();
   closeAddModal();
   document.getElementById('new-recipe-form').reset();
