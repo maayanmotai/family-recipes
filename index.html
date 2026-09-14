@@ -19,6 +19,8 @@
   .btn-green:hover { background: #2f855a; }
   .btn-light { background: #edf2f7; color: #4a5568; }
   .btn-light:hover { background: #e2e8f0; }
+  .btn-red { background: #fff; color: #e53e3e; border: 1px solid #e53e3e; }
+  .btn-red:hover { background: #fed7d7; }
 
   /* Modal Dialog */
   .modal-overlay {
@@ -352,7 +354,7 @@ let currentCategory = 'all';
 let currentScale = 1.0;
 let beefFatPercent = 15;
 
-// פונקציית הגנה (Sanitization) לנטרול קוד זדוני המוזרק לטקסט
+// פונקציית הגנה לנטרול קוד זדוני
 function escapeHTML(str) {
   if (typeof str !== 'string') return str;
   return str
@@ -423,6 +425,7 @@ async function persistToCloud() {
   if (!supabaseClient) return;
   try {
     localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+    // הוספת ה-await מוודאת שהתהליך יסתיים כראוי ללא בעיות Race Condition
     await supabaseClient
       .from('recipes')
       .upsert({ id: 'master_db', data: allRecipes });
@@ -513,8 +516,9 @@ function renderActiveRecipe() {
         <h2>${escapeHTML(r.title)}</h2>
         <span class="author-tag" style="margin-top:4px; display:inline-block;">מאת: ${escapeHTML(r.author)}</span>
       </div>
-      <div>
-        <button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')" style="padding:5px 12px; font-size:9pt; border:1px solid #cbd5e0;">✏️ ערוך מתכון</button>
+      <div style="display:flex; gap:6px;">
+        <button class="btn btn-red" onclick="deleteRecipe('${escapeHTML(r.id)}')">🗑️ מחק</button>
+        <button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')" style="border:1px solid #cbd5e0;">✏️ ערוך</button>
       </div>
     </div>
 
@@ -635,7 +639,22 @@ function openEditModal(id) {
 
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
 
-function saveNewRecipe(e) {
+// פונקציית מחיקת מתכון חדשה עם אישור
+async function deleteRecipe(id) {
+  const confirmed = confirm("האם אתה בטוח שברצונך למחוק את המתכון הזה לצמיתות?");
+  if (confirmed) {
+    allRecipes = allRecipes.filter(r => r.id !== id);
+    if (activeRecipeId === id) {
+      activeRecipeId = allRecipes.length > 0 ? allRecipes[0].id : null;
+    }
+    // שימוש ב-await מבטיח שהמחיקה תישמר לענן לפני רינדור מחדש
+    await persistToCloud();
+    renderNavList();
+    renderActiveRecipe();
+  }
+}
+
+async function saveNewRecipe(e) {
   e.preventDefault();
   const editId = document.getElementById('m-id').value;
   const title = document.getElementById('m-title').value.trim() || 'מתכון ללא שם';
@@ -677,8 +696,10 @@ function saveNewRecipe(e) {
       activeRecipeId = editId;
     }
   } else {
+    // יצירת ID חזק יותר כדי למנוע התנגשויות (שימוש ב-crypto)
+    const newId = 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now());
     const newRecipe = {
-      id: 'rec_' + Date.now(),
+      id: newId,
       title, author, category,
       basePortions: portions,
       primaryName: primName || null,
@@ -693,7 +714,8 @@ function saveNewRecipe(e) {
     activeRecipeId = newRecipe.id;
   }
 
-  persistToCloud();
+  // הוספת ה-await לשמירה תקינה
+  await persistToCloud();
   closeAddModal();
   document.getElementById('new-recipe-form').reset();
   currentScale = 1.0;
@@ -709,18 +731,18 @@ function exportData() {
   a.click();
 }
 
-function importData(event) {
+async function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
       const data = JSON.parse(e.target.result);
       if (Array.isArray(data) && data.length > 0) {
         allRecipes = data;
         activeRecipeId = allRecipes[0]?.id;
         currentScale = 1.0;
-        persistToCloud();
+        await persistToCloud();
         renderNavList();
         renderActiveRecipe();
         alert('המאגר יובא בהצלחה!');
