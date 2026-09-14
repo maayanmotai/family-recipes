@@ -161,10 +161,6 @@ let currentCategory = 'all';
 let currentScale = 1.0;
 let beefFatPercent = 15;
 
-// --- Clean Root Architecture: Local-First with Safe Lazy Sync ---
-
-// --- Clean Root Architecture: Absolute Protected Local-First Sync ---
-
 function initApp() {
   try {
     const saved = localStorage.getItem('my_recipes_db');
@@ -185,7 +181,6 @@ function initApp() {
   renderNavList();
   renderActiveRecipe();
 
-  // הפעלת סנכרון ענן רק לאחר השהייה בטוחה של 3 שניות בעליית הדף למניעת דריסה מוקדמת
   if (supabaseClient) {
     setTimeout(() => {
       fetchCloudAndMerge();
@@ -208,7 +203,6 @@ async function fetchCloudAndMerge() {
 
     const cloudRecipes = masterRow.data;
     
-    // הגנה קשיחה: לעולם אל תדרוס אם בענן יש פחות מתכונים מהזיכרון המקומי (מונע איפוס טוטאלי)
     if (cloudRecipes.length < allRecipes.length) return;
 
     if (JSON.stringify(cloudRecipes) !== JSON.stringify(allRecipes)) {
@@ -226,41 +220,6 @@ async function fetchCloudAndMerge() {
 async function persistToCloud() {
   if (!supabaseClient) return;
   try {
-    // שמירה מקומית מיידית כבסיס אמת
-    localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-    
-    // שליחה לענן
-    await supabaseClient
-      .from('recipes')
-      .upsert({ id: 'master_db', data: allRecipes });
-  } catch (err) {
-    console.warn('Cloud persistence warning:', err);
-  }
-}
-  } catch (err) {
-    // שקט ברקע
-  }
-}
-    if (error || !data || data.length === 0 || !data[0].data || !Array.isArray(data[0].data)) return;
-
-    const cloudRecipes = data[0].data;
-    if (JSON.stringify(cloudRecipes) !== JSON.stringify(allRecipes)) {
-      if (cloudRecipes.length >= allRecipes.length) {
-        allRecipes = cloudRecipes;
-        localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-        if (!allRecipes.some(r => r.id === activeRecipeId)) {
-          activeRecipeId = allRecipes[0]?.id || null;
-        }
-        renderNavList();
-        renderActiveRecipe();
-      }
-    }
-  } catch (err) {}
-}
-
-async function persistToCloud() {
-  if (!supabaseClient) return;
-  try {
     localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
     await supabaseClient
       .from('recipes')
@@ -269,8 +228,6 @@ async function persistToCloud() {
     console.warn('Cloud persistence warning:', err);
   }
 }
-
-// --- פונקציות ממשק ---
 
 function renderNavList() {
   const navEl = document.getElementById('recipe-list-nav');
