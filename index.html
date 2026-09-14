@@ -907,7 +907,6 @@ function setCategory(cat, el) {
 }
 function filterRecipes() { renderNavList(); }
 
-
 function openAddModal() {
   document.getElementById('modal-heading').innerText = '➕ הוספת מתכון חדש לספר';
   document.getElementById('m-id').value = '';
@@ -1053,9 +1052,12 @@ function importData(event) {
   reader.readAsText(file);
 }
 
-// Supabase & LocalStorage sync
+// Cloud Synchronization & Polling
 async function loadRecipesFromCloud() {
-  if (!supabaseClient) return;
+  if (!supabaseClient) {
+    loadFromLocalFallback();
+    return;
+  }
   try {
     const { data, error } = await supabaseClient
       .from('recipes')
@@ -1064,17 +1066,33 @@ async function loadRecipesFromCloud() {
       .single();
     
     if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
-      allRecipes = data.data;
-      localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-      renderNavList();
-      renderActiveRecipe();
+      if (JSON.stringify(data.data) !== JSON.stringify(allRecipes)) {
+        allRecipes = data.data;
+        localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+        renderNavList();
+        renderActiveRecipe();
+      }
     } else {
-      // If table is empty, seed it with defaultRecipes
       await saveRecipesToCloud();
     }
   } catch(err) {
-    console.warn('Cloud load error, using local:', err);
+    console.warn('Cloud load error:', err);
+    loadFromLocalFallback();
   }
+}
+
+function loadFromLocalFallback() {
+  try {
+    const saved = localStorage.getItem('my_recipes_db');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        allRecipes = parsed;
+      }
+    }
+  } catch(e) {}
+  renderNavList();
+  renderActiveRecipe();
 }
 
 async function saveRecipesToCloud() {
@@ -1088,38 +1106,12 @@ async function saveRecipesToCloud() {
   }
 }
 
-// Check if user has saved custom recipes in localStorage first
-try {
-  const saved = localStorage.getItem('my_recipes_db');
-  if (saved) {
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      allRecipes = parsed;
-    }
-  }
-} catch(e) {}
-
-renderNavList();
-renderActiveRecipe();
-
-// Load from Supabase on startup & subscribe to Realtime
+// Initial load
+loadFromLocalFallback();
 if (supabaseClient) {
   loadRecipesFromCloud();
-  
-  supabaseClient
-    .channel('public:recipes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'recipes' }, payload => {
-      if (payload.new && payload.new.data && Array.isArray(payload.new.data)) {
-        // Prevent infinite loops if data matches
-        if (JSON.stringify(payload.new.data) !== JSON.stringify(allRecipes)) {
-          allRecipes = payload.new.data;
-          localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-          renderNavList();
-          renderActiveRecipe();
-        }
-      }
-    })
-    .subscribe();
+  // Check for updates from cloud every 5 seconds so all family devices stay fully synced
+  setInterval(loadRecipesFromCloud, 5000);
 }
 </script>
 
