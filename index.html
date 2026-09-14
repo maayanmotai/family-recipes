@@ -82,6 +82,14 @@
   .inst-list { padding-right: 16px; margin: 0; font-size: 8.8pt; color: #4a5568; line-height: 1.5; }
   .inst-list li { margin-bottom: 5px; }
 </style>
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://xtaeopklnjxvvnpqhgyx.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_9-oJ5ZS2rxk65o9BUtiwoA_6rYxa-qz";
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+  </script>
 </head>
 <body>
 <div class="container">
@@ -1006,6 +1014,7 @@ function saveNewRecipe(e) {
 
   try {
     localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+    saveRecipesToCloud();
   } catch(err) { console.warn(err); }
 
   closeAddModal();
@@ -1044,7 +1053,42 @@ function importData(event) {
   reader.readAsText(file);
 }
 
-// Check if user has saved custom recipes in localStorage
+// Supabase & LocalStorage sync
+async function loadRecipesFromCloud() {
+  if (!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from('recipes')
+      .select('data')
+      .eq('id', 'master_db')
+      .single();
+    
+    if (data && data.data && Array.isArray(data.data) && data.data.length > 0) {
+      allRecipes = data.data;
+      localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+      renderNavList();
+      renderActiveRecipe();
+    } else {
+      // If table is empty, seed it with defaultRecipes
+      await saveRecipesToCloud();
+    }
+  } catch(err) {
+    console.warn('Cloud load error, using local:', err);
+  }
+}
+
+async function saveRecipesToCloud() {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient
+      .from('recipes')
+      .upsert({ id: 'master_db', data: allRecipes });
+  } catch(err) {
+    console.warn('Cloud save error:', err);
+  }
+}
+
+// Check if user has saved custom recipes in localStorage first
 try {
   const saved = localStorage.getItem('my_recipes_db');
   if (saved) {
@@ -1057,6 +1101,26 @@ try {
 
 renderNavList();
 renderActiveRecipe();
+
+// Load from Supabase on startup & subscribe to Realtime
+if (supabaseClient) {
+  loadRecipesFromCloud();
+  
+  supabaseClient
+    .channel('public:recipes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'recipes' }, payload => {
+      if (payload.new && payload.new.data && Array.isArray(payload.new.data)) {
+        // Prevent infinite loops if data matches
+        if (JSON.stringify(payload.new.data) !== JSON.stringify(allRecipes)) {
+          allRecipes = payload.new.data;
+          localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+          renderNavList();
+          renderActiveRecipe();
+        }
+      }
+    })
+    .subscribe();
+}
 </script>
 
 <!-- Modal: Add New Recipe -->
