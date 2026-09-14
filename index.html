@@ -183,6 +183,12 @@ function initApp() {
 
   if (supabaseClient) {
     setTimeout(() => {
+      fetchCloudAndMerge();
+      setInterval(fetchCloudAndMerge, 10000);
+    }, 3000);
+  }
+}
+
 async function fetchCloudAndMerge() {
   if (!supabaseClient) return;
   try {
@@ -192,7 +198,6 @@ async function fetchCloudAndMerge() {
 
     if (error || !data || !Array.isArray(data) || data.length === 0) return;
 
-    // מכיוון שיש כפילויות, ניקח את השורה האחרונה (המעודכנת ביותר שנשמרה)
     const latestRow = data[data.length - 1];
     if (!latestRow || !latestRow.data || !Array.isArray(latestRow.data)) return;
 
