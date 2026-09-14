@@ -158,6 +158,203 @@ const defaultRecipes = [
       "מחלקים ל-30 כדורים שווים (כ-115 גרם לקציצה).",
       "אופים ב-190°C–200°C כ-20–25 דקות, או מבשלים ברוטב מבעבע 25–30 דקות."
     ]
+  },
+  {
+    id: "rec_chicken_soup_patties",
+    title: "קציצות עוף מבושלות במרק",
+    author: "טוטו",
+    category: "עיקריות",
+    imageUrl: "",
+    basePortions: 12,
+    primaryName: "בשר טחון (עוף ופרגית)",
+    primaryAmount: 2000,
+    primaryUnit: "גרם",
+    isMeat: false,
+    nutrition: { cals: 4560, protein: 384, carbs: 336, fat: 168 },
+    ingredients: [
+      { name: "פרגית טחונה", amount: 1000, unit: "גרם" },
+      { name: "חזה עוף טחון", amount: 1000, unit: "גרם" },
+      { name: "פטרוזיליה קצוצה", amount: 2, unit: "חבילות" },
+      { name: "שמיר קצוץ", amount: 0.5, unit: "חבילה" },
+      { name: "בצל", amount: 3, unit: "יחידות חתוכות גס" },
+      { name: "אבקת חומוס", amount: 500, unit: "גרם" },
+      { name: "פירורי לחם", amount: 1, unit: "לפי הצורך" },
+      { name: "כורכום", amount: 1, unit: "כפית" },
+      { name: "פלפל שחור", amount: 0.75, unit: "כפית" },
+      { name: "כמון", amount: 1, unit: "כפית שטוחה" },
+      { name: "מלח", amount: 1.25, unit: "כפיות" },
+      { name: "עגבניות טחונות", amount: 6, unit: "יחידות" },
+      { name: "רסק עגבניות", amount: 3, unit: "כפות" },
+      { name: "עלי כרפס וגבעול", amount: 1, unit: "יחידה" },
+      { name: "בצל גדול", amount: 1, unit: "יחידה" },
+      { name: "פפריקה חריפה", amount: 1, unit: "כפית" },
+      { name: "גזר (חתוך לגפרורים שמנים)", amount: 3, unit: "יחידות" },
+      { name: "לימון פרסי", amount: 1, unit: "יחידה" },
+      { name: "שעועית ירוקה", amount: 150, unit: "גרם" },
+      { name: "חומוס מבושל", amount: 200, unit: "גרם" },
+      { name: "מים רותחים ומלח", amount: 1, unit: "לפי הטעם" }
+    ],
+    instructions: [
+      "מטגנים את הבצל בסיר. מוסיפים את הגזר ולאחר מכן את גבעול הכרפס וממשיכים לטגן.",
+      "מוסיפים את תבליני המרק (כורכום, כמון, פפריקה חריפה) וממשיכים בטיגון.",
+      "מוסיפים את העגבניות והרסק, ממשיכים בבישול ומוסיפים מעט מים רותחים.",
+      "מוסיפים לימון פרסי, שעועית ירוקה, חומוס מבושל, מים ומלח, ולאחר מכן מניחים את הקציצות במרק ומבשלים עד למוכנות."
+    ]
+  },
+  {
+    id: "rec_fried_beef_patties",
+    title: "קציצות בשר טחון (מטוגנות)",
+    author: "טוטו",
+    category: "עיקריות",
+    imageUrl: "",
+    basePortions: 10,
+    primaryName: "בשר טחון",
+    primaryAmount: 1000,
+    primaryUnit: "גרם",
+    isMeat: true,
+    nutrition: { cals: 3100, protein: 220, carbs: 180, fat: 180 },
+    ingredients: [
+      { name: "בשר טחון", amount: 1000, unit: "גרם" },
+      { name: "בצל גדול", amount: 1, unit: "יחידה" },
+      { name: "תפוחי אדמה גדולים", amount: 4, unit: "יחידות" },
+      { name: "מלח", amount: 1.5, unit: "כפיות" },
+      { name: "כורכום", amount: 1, unit: "כפית" },
+      { name: "פלפל שחור", amount: 1, unit: "כפית" },
+      { name: "כמון", amount: 0.75, unit: "כפית" },
+      { name: "קמח מצה", amount: 4, unit: "כפות" }
+    ],
+    instructions: [
+      "טוחנים את תפוחי האדמה במכונת בשר (רשת דקה), מפזרים עליהם מלח, מעבירים למסננת להורדת מים וסוחטים היטב.",
+      "שומרים את העמילן ששוקע בתחתית הנוזלים (ללא המיץ) ומוסיפים לבשר. טוחנים וסוחטים גם את הבצל.",
+      "מוסיפים את כל המרכיבים והתבלינים, לשים היטב, מכסים ומכניסים למקרר ללילה. למחרת מטגנים."
+    ]
+  },
+  {
+    id: "rec_fried_kuba",
+    title: "קובה מטוגנת",
+    author: "טוטו",
+    category: "עיקריות",
+    imageUrl: "",
+    basePortions: 15,
+    primaryName: "חזה עוף טחון (לבצק)",
+    primaryAmount: 500,
+    primaryUnit: "גרם",
+    isMeat: true,
+    nutrition: { cals: 3150, protein: 120, carbs: 360, fat: 135 },
+    ingredients: [
+      { name: "בשר טחון (למילוי)", amount: 400, unit: "גרם" },
+      { name: "בצל (למילוי)", amount: 2, unit: "יחידות" },
+      { name: "שקדים מולבנים דקים", amount: 50, unit: "גרם" },
+      { name: "צימוקים", amount: 50, unit: "גרם" },
+      { name: "תבלינים למילוי (כורכום, פלפל, כמון, מלח, בהרט)", amount: 1, unit: "לפי הטעם" },
+      { name: "חזה עוף טחון (לבצק)", amount: 500, unit: "גרם" },
+      { name: "בורגול דק", amount: 400, unit: "גרם" },
+      { name: "סולת", amount: 100, unit: "גרם" },
+      { name: "קורנפלור", amount: 2, unit: "כפות" },
+      { name: "מים", amount: 1, unit: "כוס (בהדרגה)" },
+      { name: "תבלינים לבצק (פלפל שחור, כורכום, כמון)", amount: 1, unit: "לפי הטעם" }
+    ],
+    instructions: [
+      "מילוי: מטגנים בצל להזהבה, מוציאים. באותה מחבת מטגנים בשר עד לאידוי הנוזלים, מוסיפים תבלינים, שקדים, צימוקים ואת הבצל המטוגן ומאדים עוד מספר דקות.",
+      "בצק: משרים בורגול במים בהדרגה, לשים היטב, מוסיפים סולת, קורנפלור וחזה עוף טחון.",
+      "נותנים מנוחות ביניים (שעה ולאחר מכן חצי שעה) עד שהבצק נוח לעבודה, ממלאים ומטגנים."
+    ]
+  },
+  {
+    id: "rec_red_pasta",
+    title: "פסטה ברוטב אדום עשיר",
+    author: "טוטו",
+    category: "עיקריות",
+    imageUrl: "",
+    basePortions: 4,
+    primaryName: "פסטה יבשה",
+    primaryAmount: 400,
+    primaryUnit: "גרם",
+    isMeat: false,
+    nutrition: { cals: 1360, protein: 36, carbs: 192, fat: 48 },
+    ingredients: [
+      { name: "פסטה יבשה", amount: 400, unit: "גרם" },
+      { name: "עגבניות מרוסקות בבלנדר", amount: 5, unit: "יחידות" },
+      { name: "רסק עגבניות", amount: 1, unit: "כף גדושה" },
+      { name: "שום כתוש", amount: 3, unit: "שיניים" },
+      { name: "שמן זית", amount: 6, unit: "כפות" },
+      { name: "גזר (חתוך לקוביות)", amount: 1, unit: "יחידה" },
+      { name: "גמבה (חתוכה לקוביות)", amount: 1, unit: "יחידה" },
+      { name: "כורכום", amount: 1, unit: "כפית" },
+      { name: "פפריקה חריפה", amount: 0.5, unit: "כפית" },
+      { name: "פפריקה מתוקה", amount: 0.5, unit: "כפית" },
+      { name: "כמון", amount: 0.25, unit: "כפית" },
+      { name: "מים רותחים", amount: 1, unit: "כוס" },
+      { name: "מלח גס", amount: 1.5, unit: "כפיות" },
+      { name: "פלפל שחור", amount: 0.5, unit: "כפית" }
+    ],
+    instructions: [
+      "מטגנים שום כתוש בשמן זית. מוסיפים קוביות גזר וגמבה ומטגנים עוד מספר דקות.",
+      "מוסיפים תבלינים (כורכום, פפריקות, כמון), רסק עגבניות, עגבניות מרוסקות ומעט מים רותחים.",
+      "מבשלים עשר דקות, מוסיפים מלח גס ופלפל שחור, וממשיכים לבשל עד שהשמן מגיר כלפי מעלה. יוצקים על הפסטה המבושלת."
+    ]
+  },
+  {
+    id: "rec_yellow_rice",
+    title: "אורז צהוב",
+    author: "טוטו",
+    category: "תוספות",
+    imageUrl: "",
+    basePortions: 8,
+    primaryName: "אורז",
+    primaryAmount: 4,
+    primaryUnit: "כוסות",
+    isMeat: false,
+    nutrition: { cals: 1920, protein: 32, carbs: 288, fat: 64 },
+    ingredients: [
+      { name: "אורז (שטוף 3 פעמים)", amount: 4, unit: "כוסות" },
+      { name: "בצל בינוני קצוץ דק", amount: 1, unit: "יחידה" },
+      { name: "גזר", amount: 2, unit: "יחידות" },
+      { name: "גמבה אדומה", amount: 0.5, unit: "יחידה" },
+      { name: "שמן זית", amount: 10, unit: "כפות" },
+      { name: "כורכום", amount: 1, unit: "כפית" },
+      { name: "כמון", amount: 0.5, unit: "כפית" },
+      { name: "פלפל שחור", amount: 0.75, unit: "כפית" },
+      { name: "מלח", amount: 2, unit: "כפיות" },
+      { name: "מים רותחים", amount: 7, unit: "כוסות" }
+    ],
+    instructions: [
+      "מטגנים בצל בשמן זית, מוסיפים גזר וגמבה וממשיכים לטגן.",
+      "מוסיפים את התבלינים (כורכום, כמון, פלפל, מלח), מטגנים עוד קצת ומוסיפים 7 כוסות מים רותחים.",
+      "מבשלים ברתיחה 10 דקות, מוסיפים את האורז, מערבבים כל כמה דקות במשך 10 דקות, מנמיכים להבה ומבשלים עד למוכנות."
+    ]
+  },
+  {
+    id: "rec_red_rice",
+    title: "אורז אדום",
+    author: "טוטו",
+    category: "תוספות",
+    imageUrl: "",
+    basePortions: 8,
+    primaryName: "אורז",
+    primaryAmount: 4,
+    primaryUnit: "כוסות",
+    isMeat: false,
+    nutrition: { cals: 2040, protein: 40, carbs: 304, fat: 64 },
+    ingredients: [
+      { name: "אורז (שטוף 3 פעמים)", amount: 4, unit: "כוסות" },
+      { name: "בצל בינוני קצוץ דק", amount: 1, unit: "יחידה" },
+      { name: "גזר", amount: 2, unit: "יחידות" },
+      { name: "גמבה אדומה", amount: 0.5, unit: "יחידה" },
+      { name: "עגבניות", amount: 5, unit: "יחידות טחונות" },
+      { name: "רסק עגבניות", amount: 2, unit: "כפות" },
+      { name: "שמן זית", amount: 10, unit: "כפות" },
+      { name: "כורכום", amount: 1, unit: "כפית" },
+      { name: "כמון", amount: 0.5, unit: "כפית" },
+      { name: "פלפל שחור", amount: 0.5, unit: "כפית" },
+      { name: "מלח", amount: 2, unit: "כפיות" },
+      { name: "מים רותחים", amount: 7, unit: "כוסות" }
+    ],
+    instructions: [
+      "מטגנים בצל בשמן זית, מוסיפים גזר וגמבה וממשיכים לטגן.",
+      "מוסיפים תבלינים (כורכום, כמון, פלפל, מלח), מטגנים מספר דקות נוספות ומוסיפים 7 כוסות מים רותחים.",
+      "מבשלים ברתיחה 10 דקות, מוסיפים את האורז, מערבבים כל כמה דקות במשך 10 דקות, מנמיכים להבה ומבשלים עד שמוכן."
+    ]
   }
 ];
 
@@ -208,15 +405,18 @@ function initApp() {
 async function fetchCloudAndMerge() {
   if (!supabaseClient) return;
   try {
+    // השליפה תוקנה מחדש - ללא maybeSingle() כדי למנוע את שגיאת 406!
     const { data, error } = await supabaseClient
       .from('recipes')
-      .select('*')
-      .eq('id', 'master_db')
-      .maybeSingle();
+      .select('*');
 
-    if (error || !data || !data.data || !Array.isArray(data.data)) return;
+    if (error || !data || !Array.isArray(data) || data.length === 0) return;
 
-    const cloudRecipes = data.data;
+    // לוקח את השורה האחרונה המעודכנת ביותר כדי לעקוף את בעיית הכפילויות
+    const latestRow = data[data.length - 1];
+    if (!latestRow || !latestRow.data || !Array.isArray(latestRow.data)) return;
+
+    const cloudRecipes = latestRow.data;
     const localJson = JSON.stringify(allRecipes);
     const cloudJson = JSON.stringify(cloudRecipes);
 
@@ -229,7 +429,9 @@ async function fetchCloudAndMerge() {
       renderNavList();
       renderActiveRecipe();
     }
-  } catch (err) {}
+  } catch (err) {
+    console.error("Cloud sync error:", err);
+  }
 }
 
 async function persistToCloud() {
