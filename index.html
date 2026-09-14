@@ -58,6 +58,10 @@
   .nav-item-title { font-size: 9.5pt; color: #1a202c; display: block; }
   .nav-item-sub { font-size: 8pt; color: #718096; }
   .recipe-viewer { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  
+  /* Recipe Image Styles */
+  .recipe-cover-img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border); display: block; }
+  
   .recipe-meta-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #edf2f7; padding-bottom: 8px; margin-bottom: 14px; }
   .recipe-meta-header h2 { margin: 0; font-size: 15pt; color: #1a202c; }
   .author-tag { background: #ebf8ff; color: var(--primary); padding: 3px 8px; border-radius: 12px; font-size: 8.5pt; font-weight: 600; }
@@ -132,6 +136,7 @@ const defaultRecipes = [
     title: "קציצות עוף, קינואה וירקות (30 יחידות)",
     author: "מעין",
     category: "עיקריות",
+    imageUrl: "",
     basePortions: 30,
     primaryName: "חזה עוף טחון",
     primaryAmount: 1680,
@@ -160,6 +165,7 @@ const defaultRecipes = [
     title: "קציצות עוף מבושלות במרק",
     author: "טוטו",
     category: "עיקריות",
+    imageUrl: "",
     basePortions: 12,
     primaryName: "בשר טחון (עוף ופרגית)",
     primaryAmount: 2000,
@@ -201,6 +207,7 @@ const defaultRecipes = [
     title: "קציצות בשר טחון (מטוגנות)",
     author: "טוטו",
     category: "עיקריות",
+    imageUrl: "",
     basePortions: 10,
     primaryName: "בשר טחון",
     primaryAmount: 1000,
@@ -228,6 +235,7 @@ const defaultRecipes = [
     title: "קובה מטוגנת",
     author: "טוטו",
     category: "עיקריות",
+    imageUrl: "",
     basePortions: 15,
     primaryName: "חזה עוף טחון (לבצק)",
     primaryAmount: 500,
@@ -258,6 +266,7 @@ const defaultRecipes = [
     title: "פסטה ברוטב אדום עשיר",
     author: "טוטו",
     category: "עיקריות",
+    imageUrl: "",
     basePortions: 4,
     primaryName: "פסטה יבשה",
     primaryAmount: 400,
@@ -291,6 +300,7 @@ const defaultRecipes = [
     title: "אורז צהוב",
     author: "טוטו",
     category: "תוספות",
+    imageUrl: "",
     basePortions: 8,
     primaryName: "אורז",
     primaryAmount: 4,
@@ -320,6 +330,7 @@ const defaultRecipes = [
     title: "אורז אדום",
     author: "טוטו",
     category: "תוספות",
+    imageUrl: "",
     basePortions: 8,
     primaryName: "אורז",
     primaryAmount: 4,
@@ -354,7 +365,6 @@ let currentCategory = 'all';
 let currentScale = 1.0;
 let beefFatPercent = 15;
 
-// פונקציית הגנה לנטרול קוד זדוני
 function escapeHTML(str) {
   if (typeof str !== 'string') return str;
   return str
@@ -393,7 +403,6 @@ function initApp() {
   }
 }
 
-// ** השדרוג של שלב 2: פונקציה מהירה שמושכת רק שורה אחת! **
 async function fetchCloudAndMerge() {
   if (!supabaseClient) return;
   try {
@@ -467,6 +476,11 @@ function renderActiveRecipe() {
   const scaledPortions = (r.basePortions * currentScale);
   const formattedPortions = (scaledPortions % 1 === 0) ? scaledPortions : scaledPortions.toFixed(1);
 
+  let imageHTML = '';
+  if (r.imageUrl && r.imageUrl.trim() !== '') {
+    imageHTML = `<img src="${escapeHTML(r.imageUrl)}" alt="${escapeHTML(r.title)}" class="recipe-cover-img" loading="lazy">`;
+  }
+
   let primaryControl = '';
   if (r.primaryName && r.primaryAmount) {
     const scaledPrimary = Math.round(r.primaryAmount * currentScale);
@@ -510,6 +524,7 @@ function renderActiveRecipe() {
   const perFat = scaledPortions > 0 ? (fat / scaledPortions).toFixed(1) : 0;
 
   viewEl.innerHTML = `
+    ${imageHTML}
     <div class="recipe-meta-header">
       <div>
         <h2>${escapeHTML(r.title)}</h2>
@@ -608,6 +623,7 @@ function openEditModal(id) {
   document.getElementById('m-title').value = r.title || '';
   document.getElementById('m-author').value = r.author || '';
   document.getElementById('m-category').value = r.category || 'עיקריות';
+  document.getElementById('m-image-url').value = r.imageUrl || '';
   document.getElementById('m-portions').value = r.basePortions || '';
   document.getElementById('m-prim-name').value = r.primaryName || '';
   document.getElementById('m-prim-qty').value = r.primaryAmount || '';
@@ -638,7 +654,6 @@ function openEditModal(id) {
 
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
 
-// פונקציית מחיקת מתכון
 async function deleteRecipe(id) {
   const confirmed = confirm("האם אתה בטוח שברצונך למחוק את המתכון הזה לצמיתות?");
   if (confirmed) {
@@ -658,6 +673,7 @@ async function saveNewRecipe(e) {
   const title = document.getElementById('m-title').value.trim() || 'מתכון ללא שם';
   const author = document.getElementById('m-author').value.trim() || 'מעין';
   const category = document.getElementById('m-category').value || 'עיקריות';
+  const imageUrl = document.getElementById('m-image-url').value.trim();
   const portions = parseFloat(document.getElementById('m-portions').value) || 1;
   const primName = document.getElementById('m-prim-name').value.trim();
   const primQty = parseFloat(document.getElementById('m-prim-qty').value) || null;
@@ -683,7 +699,7 @@ async function saveNewRecipe(e) {
     if (index !== -1) {
       allRecipes[index] = {
         ...allRecipes[index],
-        title, author, category,
+        title, author, category, imageUrl,
         basePortions: portions,
         primaryName: primName || null,
         primaryAmount: primQty,
@@ -697,7 +713,7 @@ async function saveNewRecipe(e) {
     const newId = 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now());
     const newRecipe = {
       id: newId,
-      title, author, category,
+      title, author, category, imageUrl,
       basePortions: portions,
       primaryName: primName || null,
       primaryAmount: primQty,
@@ -785,6 +801,11 @@ initApp();
           <label>מספר מנות בסיס:</label>
           <input type="number" id="m-portions" class="form-control" placeholder="4" min="0.5" step="0.5">
         </div>
+      </div>
+
+      <div class="form-group">
+        <label>קישור לתמונה (URL):</label>
+        <input type="text" id="m-image-url" class="form-control" placeholder="https://example.com/image.jpg">
       </div>
 
       <div class="form-row">
