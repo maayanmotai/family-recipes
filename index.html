@@ -202,7 +202,6 @@ async function fetchCloudAndMerge() {
     if (!masterRow || !masterRow.data || !Array.isArray(masterRow.data)) return;
 
     const cloudRecipes = masterRow.data;
-    
     if (cloudRecipes.length < allRecipes.length) return;
 
     if (JSON.stringify(cloudRecipes) !== JSON.stringify(allRecipes)) {
@@ -528,7 +527,6 @@ function importData(event) {
   reader.readAsText(file);
 }
 
-// הפעלת המערכת בעליית הדף
 initApp();
 </script>
 
