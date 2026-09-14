@@ -20,7 +20,6 @@
   .btn-light { background: #edf2f7; color: #4a5568; }
   .btn-light:hover { background: #e2e8f0; }
 
-  /* Modal Dialog */
   .modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
     align-items: center; justify-content: center; z-index: 1000; padding: 16px;
@@ -66,8 +65,6 @@
   .scaler-input-wrap { display: flex; align-items: center; background: #fff; border: 2px solid #cbd5e0; border-radius: 6px; overflow: hidden; }
   .scaler-input-wrap input, .scaler-input-wrap select { width: 100%; padding: 5px 8px; border: none; font-size: 10pt; font-weight: 700; text-align: center; outline: none; }
   .scaler-unit { padding: 0 8px; background: #edf2f7; color: #718096; font-size: 8.5pt; font-weight: 600; line-height: 32px; }
-  .multiplier-btns { display: flex; gap: 4px; margin-top: 8px; align-items: center; }
-  .m-btn { padding: 3px 8px; background: #fff; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 8pt; font-weight: 600; cursor: pointer; color: var(--primary); }
   .nutrition-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 8.5pt; }
   .nutrition-table th, .nutrition-table td { padding: 5px 8px; border: 1px solid var(--border); text-align: right; }
   .nutrition-table th { background: #edf2f7; color: #4a5568; }
@@ -722,7 +719,6 @@ function importData(event) {
 initApp();
 </script>
 
-<!-- Modal: Add New Recipe -->
 <div class="modal-overlay" id="add-modal">
   <div class="modal-box">
     <div class="modal-header">
