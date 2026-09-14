@@ -183,42 +183,31 @@ function initApp() {
 
   if (supabaseClient) {
     setTimeout(() => {
-   async function fetchCloudAndMerge() {
+async function fetchCloudAndMerge() {
   if (!supabaseClient) return;
   try {
     const { data, error } = await supabaseClient
       .from('recipes')
       .select('*');
 
-    if (error || !data || !Array.isArray(data)) return;
+    if (error || !data || !Array.isArray(data) || data.length === 0) return;
 
-    const masterRow = data.find(row => row.id === 'master_db');
-    if (!masterRow || !masterRow.data || !Array.isArray(masterRow.data)) return;
+    // מכיוון שיש כפילויות, ניקח את השורה האחרונה (המעודכנת ביותר שנשמרה)
+    const latestRow = data[data.length - 1];
+    if (!latestRow || !latestRow.data || !Array.isArray(latestRow.data)) return;
 
-    const cloudRecipes = masterRow.data;
+    const cloudRecipes = latestRow.data;
     const localJson = JSON.stringify(allRecipes);
     const cloudJson = JSON.stringify(cloudRecipes);
 
-    // אם יש הבדל אמיתי בין הענן למקומי
     if (cloudJson !== localJson) {
-      // אם בענן יש יותר מתכונים או שהמקומי בדיוק בברירת מחדל, נעדכן מיד
-      if (cloudRecipes.length > allRecipes.length || (allRecipes.length === 1 && allRecipes[0].id === 'patties')) {
-        allRecipes = cloudRecipes;
-        localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-        if (!allRecipes.some(r => r.id === activeRecipeId)) {
-          activeRecipeId = allRecipes[0]?.id || null;
-        }
-        renderNavList();
-        renderActiveRecipe();
-      } 
-      else if (cloudRecipes.length === allRecipes.length) {
-        // אם יש אותו מספר מתכונים אבל תוכן שונה (למשל עריכה של מתכון קיים במכשיר השני)
-        // נעדכן כדי שהעריכה תעבור לדפדפן השני
-        allRecipes = cloudRecipes;
-        localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-        renderNavList();
-        renderActiveRecipe();
+      allRecipes = cloudRecipes;
+      localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+      if (!allRecipes.some(r => r.id === activeRecipeId)) {
+        activeRecipeId = allRecipes[0]?.id || null;
       }
+      renderNavList();
+      renderActiveRecipe();
     }
   } catch (err) {}
 }
