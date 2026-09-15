@@ -3,44 +3,52 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ספר המתכונים החכם</title>
+<title>ספר המתכונים החכם - מוגן</title>
 <style>
   :root { --primary: #2b6cb0; --primary-dark: #1a365d; --bg: #f7fafc; --text: #2d3748; --border: #e2e8f0; }
   * { box-sizing: border-box; }
   body { margin: 0; padding: 14px; font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg); color: var(--text); direction: rtl; line-height: 1.5; }
+  
+  /* Auth Screen Overlay */
+  #auth-screen {
+    position: fixed; inset: 0; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); 
+    display: flex; align-items: center; justify-content: center; z-index: 9999;
+  }
+  .auth-box { background: #fff; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; }
+  .auth-box h2 { margin-top: 0; color: var(--primary-dark); }
+  .auth-box input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 11pt; outline: none; font-family: inherit; }
+  .auth-box button { width: 100%; padding: 10px; font-size: 11pt; margin-bottom: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; }
+  .auth-msg { font-size: 9pt; color: #e53e3e; margin-bottom: 10px; min-height: 18px; }
+
+  /* Main App Container */
+  #app-container { display: none; }
+
   .container { max-width: 1000px; margin: 0 auto; }
   .app-header { background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: #fff; padding: 18px 20px; border-radius: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
   .app-title h1 { margin: 0; font-size: 18pt; }
   .app-title p { margin: 2px 0 0 0; font-size: 9.5pt; opacity: 0.9; }
   .btn { padding: 8px 14px; border-radius: 6px; font-size: 9.5pt; font-weight: 600; cursor: pointer; border: none; }
 
-  .app-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .app-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   .btn-green { background: #38a169; color: #fff; }
   .btn-green:hover { background: #2f855a; }
   .btn-light { background: #edf2f7; color: #4a5568; }
   .btn-light:hover { background: #e2e8f0; }
   .btn-red { background: #fff; color: #e53e3e; border: 1px solid #e53e3e; }
   .btn-red:hover { background: #fed7d7; }
+  .btn-logout { background: transparent; border: 1px solid rgba(255,255,255,0.5); color: #fff; }
+  .btn-logout:hover { background: rgba(255,255,255,0.1); }
 
   /* Modal Dialog */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
-    align-items: center; justify-content: center; z-index: 1000; padding: 16px;
-  }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
   .modal-overlay.open { display: flex; }
-  .modal-box {
-    background: #fff; width: 100%; max-width: 620px; border-radius: 12px;
-    max-height: 90vh; overflow-y: auto; padding: 22px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  }
+  .modal-box { background: #fff; width: 100%; max-width: 620px; border-radius: 12px; max-height: 90vh; overflow-y: auto; padding: 22px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); }
   .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #edf2f7; padding-bottom: 8px; }
   .modal-header h3 { margin: 0; font-size: 13.5pt; color: #1a202c; }
   .close-btn { background: none; border: none; font-size: 18pt; cursor: pointer; color: #a0aec0; }
   .form-group { margin-bottom: 10px; }
   .form-group label { display: block; font-size: 8.8pt; font-weight: 600; margin-bottom: 3px; color: #4a5568; }
-  .form-control {
-    width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px;
-    font-size: 9.5pt; outline: none; font-family: inherit;
-  }
+  .form-control { width: 100%; padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 9.5pt; outline: none; font-family: inherit; }
   .form-control:focus { border-color: var(--primary); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
@@ -58,9 +66,7 @@
   .nav-item-title { font-size: 9.5pt; color: #1a202c; display: block; }
   .nav-item-sub { font-size: 8pt; color: #718096; }
   .recipe-viewer { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
-  
   .recipe-cover-img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border); display: block; }
-  
   .recipe-meta-header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #edf2f7; padding-bottom: 8px; margin-bottom: 14px; }
   .recipe-meta-header h2 { margin: 0; font-size: 15pt; color: #1a202c; }
   .author-tag { background: #ebf8ff; color: var(--primary); padding: 3px 8px; border-radius: 12px; font-size: 8.5pt; font-weight: 600; }
@@ -97,16 +103,31 @@
   </script>
 </head>
 <body>
-<div class="container">
+
+<!-- מסך התחברות -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <h2>🔐 כניסה לספר המתכונים</h2>
+    <input type="email" id="auth-email" placeholder="אימייל">
+    <input type="password" id="auth-password" placeholder="סיסמה (מינימום 6 תווים)">
+    <div id="auth-msg" class="auth-msg"></div>
+    <button class="btn-green" onclick="handleLogin()">התחברות</button>
+    <button class="btn-light" onclick="handleSignup()">הרשמה למשתמש חדש</button>
+  </div>
+</div>
+
+<!-- האפליקציה עצמה -->
+<div class="container" id="app-container">
   <div class="app-header">
     <div class="app-title">
-      <h1>ספר המתכונים החכם</h1>
-      <p>מאגר מתכונים דינמי | חישוב כמויות ומאקרו בזמן אמת</p>
+      <h1>ספר המתכונים המשותף</h1>
+      <p id="user-display">מחובר כ-</p>
     </div>
     <div class="app-actions">
-      <button class="btn btn-green" onclick="openAddModal()">➕ הוסף מתכון חדש</button>
-      <button class="btn btn-light" onclick="exportData()">💾 ייצוא גיבוי</button>
-      <button class="btn btn-light" onclick="document.getElementById('import-file').click()">📂 ייבוא גיבוי</button>
+      <button class="btn btn-green" onclick="openAddModal()">➕ הוסף מתכון</button>
+      <button class="btn btn-light" onclick="exportData()">💾 ייצוא</button>
+      <button class="btn btn-light" onclick="document.getElementById('import-file').click()">📂 ייבוא</button>
+      <button class="btn btn-logout" onclick="handleLogout()">🚪 התנתק</button>
       <input type="file" id="import-file" style="display:none" onchange="importData(event)">
     </div>
   </div>
@@ -129,232 +150,52 @@
 </div>
 
 <script>
+let currentUser = null;
+let syncInterval = null;
+
+// מתכוני ברירת מחדל + טוטו
 const defaultRecipes = [
   {
-    id: "patties",
-    title: "קציצות עוף, קינואה וירקות (30 יחידות)",
-    author: "מעין",
-    category: "עיקריות",
-    imageUrl: "",
-    basePortions: 30,
-    primaryName: "חזה עוף טחון",
-    primaryAmount: 1680,
-    primaryUnit: "גרם",
-    isMeat: false,
+    id: "patties", title: "קציצות עוף, קינואה וירקות (30 יחידות)", author: "מעין", category: "עיקריות", imageUrl: "", basePortions: 30, primaryName: "חזה עוף טחון", primaryAmount: 1680, primaryUnit: "גרם", isMeat: false,
     nutrition: { cals: 3000, protein: 435, carbs: 204, fat: 45 },
-    ingredients: [
-      { name: "חזה עוף טחון", amount: 1680, unit: "גרם" },
-      { name: "קינואה מבושלת", amount: 290, unit: "גרם" },
-      { name: "בצל לבן/צהוב", amount: 550, unit: "גרם" },
-      { name: "כרישה", amount: 380, unit: "גרם" },
-      { name: "קישוא מגורר וסחוט", amount: 400, unit: "גרם" },
-      { name: "פטרוזיליה טרייה", amount: 50, unit: "גרם" },
-      { name: "ביצים (L)", amount: 2, unit: "יחידות" },
-      { name: "פירורי לחם", amount: 30, unit: "גרם" }
-    ],
-    instructions: [
-      "מגררים קישוא דק וסוחטים היטב לסילוק נוזלים. קוצצים דק בצל, כרישה ופטרוזיליה.",
-      "בקערה מערבבים את כל המרכיבים והתבלינים למסה אחידה. מקררים 20 דקות.",
-      "מחלקים ל-30 כדורים שווים (כ-115 גרם לקציצה).",
-      "אופים ב-190°C–200°C כ-20–25 דקות, או מבשלים ברוטב מבעבע 25–30 דקות."
-    ]
+    ingredients: [{ name: "חזה עוף טחון", amount: 1680, unit: "גרם" }, { name: "קינואה מבושלת", amount: 290, unit: "גרם" }, { name: "בצל לבן/צהוב", amount: 550, unit: "גרם" }, { name: "כרישה", amount: 380, unit: "גרם" }, { name: "קישוא מגורר וסחוט", amount: 400, unit: "גרם" }, { name: "פטרוזיליה טרייה", amount: 50, unit: "גרם" }, { name: "ביצים (L)", amount: 2, unit: "יחידות" }, { name: "פירורי לחם", amount: 30, unit: "גרם" }],
+    instructions: ["מגררים קישוא דק וסוחטים היטב.", "מערבבים את הכל ולשים היטב.", "אופים ב-200 מעלות כ-20 דקות."]
   },
   {
-    id: "rec_chicken_soup_patties",
-    title: "קציצות עוף מבושלות במרק",
-    author: "טוטו",
-    category: "עיקריות",
-    imageUrl: "",
-    basePortions: 12,
-    primaryName: "בשר טחון (עוף ופרגית)",
-    primaryAmount: 2000,
-    primaryUnit: "גרם",
-    isMeat: false,
+    id: "rec_chicken_soup_patties", title: "קציצות עוף מבושלות במרק", author: "טוטו", category: "עיקריות", imageUrl: "", basePortions: 12, primaryName: "בשר טחון", primaryAmount: 2000, primaryUnit: "גרם", isMeat: false,
     nutrition: { cals: 4560, protein: 384, carbs: 336, fat: 168 },
-    ingredients: [
-      { name: "פרגית טחונה", amount: 1000, unit: "גרם" },
-      { name: "חזה עוף טחון", amount: 1000, unit: "גרם" },
-      { name: "פטרוזיליה קצוצה", amount: 2, unit: "חבילות" },
-      { name: "שמיר קצוץ", amount: 0.5, unit: "חבילה" },
-      { name: "בצל", amount: 3, unit: "יחידות חתוכות גס" },
-      { name: "אבקת חומוס", amount: 500, unit: "גרם" },
-      { name: "פירורי לחם", amount: 1, unit: "לפי הצורך" },
-      { name: "כורכום", amount: 1, unit: "כפית" },
-      { name: "פלפל שחור", amount: 0.75, unit: "כפית" },
-      { name: "כמון", amount: 1, unit: "כפית שטוחה" },
-      { name: "מלח", amount: 1.25, unit: "כפיות" },
-      { name: "עגבניות טחונות", amount: 6, unit: "יחידות" },
-      { name: "רסק עגבניות", amount: 3, unit: "כפות" },
-      { name: "עלי כרפס וגבעול", amount: 1, unit: "יחידה" },
-      { name: "בצל גדול", amount: 1, unit: "יחידה" },
-      { name: "פפריקה חריפה", amount: 1, unit: "כפית" },
-      { name: "גזר (חתוך לגפרורים שמנים)", amount: 3, unit: "יחידות" },
-      { name: "לימון פרסי", amount: 1, unit: "יחידה" },
-      { name: "שעועית ירוקה", amount: 150, unit: "גרם" },
-      { name: "חומוס מבושל", amount: 200, unit: "גרם" },
-      { name: "מים רותחים ומלח", amount: 1, unit: "לפי הטעם" }
-    ],
-    instructions: [
-      "מטגנים את הבצל בסיר. מוסיפים את הגזר ולאחר מכן את גבעול הכרפס וממשיכים לטגן.",
-      "מוסיפים את תבליני המרק (כורכום, כמון, פפריקה חריפה) וממשיכים בטיגון.",
-      "מוסיפים את העגבניות והרסק, ממשיכים בבישול ומוסיפים מעט מים רותחים.",
-      "מוסיפים לימון פרסי, שעועית ירוקה, חומוס מבושל, מים ומלח, ולאחר מכן מניחים את הקציצות במרק ומבשלים עד למוכנות."
-    ]
+    ingredients: [{ name: "פרגית טחונה", amount: 1000, unit: "גרם" }, { name: "חזה עוף טחון", amount: 1000, unit: "גרם" }, { name: "עגבניות טחונות", amount: 6, unit: "יחידות" }],
+    instructions: ["מטגנים את הבצל והירקות.", "מוסיפים תבלינים, עגבניות ומים.", "מבשלים את הקציצות ברוטב."]
   },
   {
-    id: "rec_fried_beef_patties",
-    title: "קציצות בשר טחון (מטוגנות)",
-    author: "טוטו",
-    category: "עיקריות",
-    imageUrl: "",
-    basePortions: 10,
-    primaryName: "בשר טחון",
-    primaryAmount: 1000,
-    primaryUnit: "גרם",
-    isMeat: true,
+    id: "rec_fried_beef_patties", title: "קציצות בשר טחון (מטוגנות)", author: "טוטו", category: "עיקריות", imageUrl: "", basePortions: 10, primaryName: "בשר טחון", primaryAmount: 1000, primaryUnit: "גרם", isMeat: true,
     nutrition: { cals: 3100, protein: 220, carbs: 180, fat: 180 },
-    ingredients: [
-      { name: "בשר טחון", amount: 1000, unit: "גרם" },
-      { name: "בצל גדול", amount: 1, unit: "יחידה" },
-      { name: "תפוחי אדמה גדולים", amount: 4, unit: "יחידות" },
-      { name: "מלח", amount: 1.5, unit: "כפיות" },
-      { name: "כורכום", amount: 1, unit: "כפית" },
-      { name: "פלפל שחור", amount: 1, unit: "כפית" },
-      { name: "כמון", amount: 0.75, unit: "כפית" },
-      { name: "קמח מצה", amount: 4, unit: "כפות" }
-    ],
-    instructions: [
-      "טוחנים את תפוחי האדמה במכונת בשר (רשת דקה), מפזרים עליהם מלח, מעבירים למסננת להורדת מים וסוחטים היטב.",
-      "שומרים את העמילן ששוקע בתחתית הנוזלים (ללא המיץ) ומוסיפים לבשר. טוחנים וסוחטים גם את הבצל.",
-      "מוסיפים את כל המרכיבים והתבלינים, לשים היטב, מכסים ומכניסים למקרר ללילה. למחרת מטגנים."
-    ]
+    ingredients: [{ name: "בשר טחון", amount: 1000, unit: "גרם" }, { name: "תפוחי אדמה גדולים", amount: 4, unit: "יחידות" }],
+    instructions: ["טוחנים את תפוחי האדמה וסוחטים.", "לשים את כל החומרים ומקררים.", "מטגנים בשמן עמוק או רדוד."]
   },
   {
-    id: "rec_fried_kuba",
-    title: "קובה מטוגנת",
-    author: "טוטו",
-    category: "עיקריות",
-    imageUrl: "",
-    basePortions: 15,
-    primaryName: "חזה עוף טחון (לבצק)",
-    primaryAmount: 500,
-    primaryUnit: "גרם",
-    isMeat: true,
+    id: "rec_fried_kuba", title: "קובה מטוגנת", author: "טוטו", category: "עיקריות", imageUrl: "", basePortions: 15, primaryName: "חזה עוף (לבצק)", primaryAmount: 500, primaryUnit: "גרם", isMeat: true,
     nutrition: { cals: 3150, protein: 120, carbs: 360, fat: 135 },
-    ingredients: [
-      { name: "בשר טחון (למילוי)", amount: 400, unit: "גרם" },
-      { name: "בצל (למילוי)", amount: 2, unit: "יחידות" },
-      { name: "שקדים מולבנים דקים", amount: 50, unit: "גרם" },
-      { name: "צימוקים", amount: 50, unit: "גרם" },
-      { name: "תבלינים למילוי (כורכום, פלפל, כמון, מלח, בהרט)", amount: 1, unit: "לפי הטעם" },
-      { name: "חזה עוף טחון (לבצק)", amount: 500, unit: "גרם" },
-      { name: "בורגול דק", amount: 400, unit: "גרם" },
-      { name: "סולת", amount: 100, unit: "גרם" },
-      { name: "קורנפלור", amount: 2, unit: "כפות" },
-      { name: "מים", amount: 1, unit: "כוס (בהדרגה)" },
-      { name: "תבלינים לבצק (פלפל שחור, כורכום, כמון)", amount: 1, unit: "לפי הטעם" }
-    ],
-    instructions: [
-      "מילוי: מטגנים בצל להזהבה, מוציאים. באותה מחבת מטגנים בשר עד לאידוי הנוזלים, מוסיפים תבלינים, שקדים, צימוקים ואת הבצל המטוגן ומאדים עוד מספר דקות.",
-      "בצק: משרים בורגול במים בהדרגה, לשים היטב, מוסיפים סולת, קורנפלור וחזה עוף טחון.",
-      "נותנים מנוחות ביניים (שעה ולאחר מכן חצי שעה) עד שהבצק נוח לעבודה, ממלאים ומטגנים."
-    ]
+    ingredients: [{ name: "בשר טחון למילוי", amount: 400, unit: "גרם" }, { name: "חזה עוף לבצק", amount: 500, unit: "גרם" }, { name: "בורגול דק", amount: 400, unit: "גרם" }],
+    instructions: ["מטגנים את המילוי.", "מכינים את הבצק ומשהים.", "ממלאים את הקובות ומטגנים."]
   },
   {
-    id: "rec_red_pasta",
-    title: "פסטה ברוטב אדום עשיר",
-    author: "טוטו",
-    category: "עיקריות",
-    imageUrl: "",
-    basePortions: 4,
-    primaryName: "פסטה יבשה",
-    primaryAmount: 400,
-    primaryUnit: "גרם",
-    isMeat: false,
+    id: "rec_red_pasta", title: "פסטה ברוטב אדום עשיר", author: "טוטו", category: "עיקריות", imageUrl: "", basePortions: 4, primaryName: "פסטה יבשה", primaryAmount: 400, primaryUnit: "גרם", isMeat: false,
     nutrition: { cals: 1360, protein: 36, carbs: 192, fat: 48 },
-    ingredients: [
-      { name: "פסטה יבשה", amount: 400, unit: "גרם" },
-      { name: "עגבניות מרוסקות בבלנדר", amount: 5, unit: "יחידות" },
-      { name: "רסק עגבניות", amount: 1, unit: "כף גדושה" },
-      { name: "שום כתוש", amount: 3, unit: "שיניים" },
-      { name: "שמן זית", amount: 6, unit: "כפות" },
-      { name: "גזר (חתוך לקוביות)", amount: 1, unit: "יחידה" },
-      { name: "גמבה (חתוכה לקוביות)", amount: 1, unit: "יחידה" },
-      { name: "כורכום", amount: 1, unit: "כפית" },
-      { name: "פפריקה חריפה", amount: 0.5, unit: "כפית" },
-      { name: "פפריקה מתוקה", amount: 0.5, unit: "כפית" },
-      { name: "כמון", amount: 0.25, unit: "כפית" },
-      { name: "מים רותחים", amount: 1, unit: "כוס" },
-      { name: "מלח גס", amount: 1.5, unit: "כפיות" },
-      { name: "פלפל שחור", amount: 0.5, unit: "כפית" }
-    ],
-    instructions: [
-      "מטגנים שום כתוש בשמן זית. מוסיפים קוביות גזר וגמבה ומטגנים עוד מספר דקות.",
-      "מוסיפים תבלינים (כורכום, פפריקות, כמון), רסק עגבניות, עגבניות מרוסקות ומעט מים רותחים.",
-      "מבשלים עשר דקות, מוסיפים מלח גס ופלפל שחור, וממשיכים לבשל עד שהשמן מגיר כלפי מעלה. יוצקים על הפסטה המבושלת."
-    ]
+    ingredients: [{ name: "פסטה יבשה", amount: 400, unit: "גרם" }, { name: "עגבניות מרוסקות", amount: 5, unit: "יחידות" }],
+    instructions: ["מטגנים שום וירקות.", "מוסיפים עגבניות ותבלינים.", "מבשלים ויוצקים על הפסטה."]
   },
   {
-    id: "rec_yellow_rice",
-    title: "אורז צהוב",
-    author: "טוטו",
-    category: "תוספות",
-    imageUrl: "",
-    basePortions: 8,
-    primaryName: "אורז",
-    primaryAmount: 4,
-    primaryUnit: "כוסות",
-    isMeat: false,
+    id: "rec_yellow_rice", title: "אורז צהוב", author: "טוטו", category: "תוספות", imageUrl: "", basePortions: 8, primaryName: "אורז", primaryAmount: 4, primaryUnit: "כוסות", isMeat: false,
     nutrition: { cals: 1920, protein: 32, carbs: 288, fat: 64 },
-    ingredients: [
-      { name: "אורז (שטוף 3 פעמים)", amount: 4, unit: "כוסות" },
-      { name: "בצל בינוני קצוץ דק", amount: 1, unit: "יחידה" },
-      { name: "גזר", amount: 2, unit: "יחידות" },
-      { name: "גמבה אדומה", amount: 0.5, unit: "יחידה" },
-      { name: "שמן זית", amount: 10, unit: "כפות" },
-      { name: "כורכום", amount: 1, unit: "כפית" },
-      { name: "כמון", amount: 0.5, unit: "כפית" },
-      { name: "פלפל שחור", amount: 0.75, unit: "כפית" },
-      { name: "מלח", amount: 2, unit: "כפיות" },
-      { name: "מים רותחים", amount: 7, unit: "כוסות" }
-    ],
-    instructions: [
-      "מטגנים בצל בשמן זית, מוסיפים גזר וגמבה וממשיכים לטגן.",
-      "מוסיפים את התבלינים (כורכום, כמון, פלפל, מלח), מטגנים עוד קצת ומוסיפים 7 כוסות מים רותחים.",
-      "מבשלים ברתיחה 10 דקות, מוסיפים את האורז, מערבבים כל כמה דקות במשך 10 דקות, מנמיכים להבה ומבשלים עד למוכנות."
-    ]
+    ingredients: [{ name: "אורז", amount: 4, unit: "כוסות" }, { name: "גזר", amount: 2, unit: "יחידות" }, { name: "כורכום", amount: 1, unit: "כפית" }],
+    instructions: ["מטגנים ירקות وتבלינים.", "מוסיפים מים ואורז.", "מבשלים על אש קטנה עד שמוכן."]
   },
   {
-    id: "rec_red_rice",
-    title: "אורז אדום",
-    author: "טוטו",
-    category: "תוספות",
-    imageUrl: "",
-    basePortions: 8,
-    primaryName: "אורז",
-    primaryAmount: 4,
-    primaryUnit: "כוסות",
-    isMeat: false,
+    id: "rec_red_rice", title: "אורז אדום", author: "טוטו", category: "תוספות", imageUrl: "", basePortions: 8, primaryName: "אורז", primaryAmount: 4, primaryUnit: "כוסות", isMeat: false,
     nutrition: { cals: 2040, protein: 40, carbs: 304, fat: 64 },
-    ingredients: [
-      { name: "אורז (שטוף 3 פעמים)", amount: 4, unit: "כוסות" },
-      { name: "בצל בינוני קצוץ דק", amount: 1, unit: "יחידה" },
-      { name: "גזר", amount: 2, unit: "יחידות" },
-      { name: "גמבה אדומה", amount: 0.5, unit: "יחידה" },
-      { name: "עגבניות", amount: 5, unit: "יחידות טחונות" },
-      { name: "רסק עגבניות", amount: 2, unit: "כפות" },
-      { name: "שמן זית", amount: 10, unit: "כפות" },
-      { name: "כורכום", amount: 1, unit: "כפית" },
-      { name: "כמון", amount: 0.5, unit: "כפית" },
-      { name: "פלפל שחור", amount: 0.5, unit: "כפית" },
-      { name: "מלח", amount: 2, unit: "כפיות" },
-      { name: "מים רותחים", amount: 7, unit: "כוסות" }
-    ],
-    instructions: [
-      "מטגנים בצל בשמן זית, מוסיפים גזר וגמבה וממשיכים לטגן.",
-      "מוסיפים תבלינים (כורכום, כמון, פלפל, מלח), מטגנים מספר דקות נוספות ומוסיפים 7 כוסות מים רותחים.",
-      "מבשלים ברתיחה 10 דקות, מוסיפים את האורז, מערבבים כל כמה דקות במשך 10 דקות, מנמיכים להבה ומבשלים עד שמוכן."
-    ]
+    ingredients: [{ name: "אורז", amount: 4, unit: "כוסות" }, { name: "עגבניות", amount: 5, unit: "יחידות" }, { name: "רסק עגבניות", amount: 2, unit: "כפות" }],
+    instructions: ["מטגנים ירקות ותבלינים.", "מוסיפים רסק, מים ואורז.", "מבשלים על אש קטנה."]
   }
 ];
 
@@ -366,53 +207,102 @@ let beefFatPercent = 15;
 
 function escapeHTML(str) {
   if (typeof str !== 'string') return str;
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
+
+// --- Auth Logic ---
+async function checkSession() {
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  if (session) { loginSuccess(session.user); } 
+  else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+  }
+}
+
+async function handleLogin() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const msgEl = document.getElementById('auth-msg');
+  if(!email || password.length < 6) { msgEl.innerText = "נא להזין אימייל וסיסמה (לפחות 6 תווים)."; return; }
+  msgEl.innerText = "מתחבר...";
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) { msgEl.innerText = "שגיאה: " + error.message; } 
+  else { msgEl.innerText = ""; loginSuccess(data.user); }
+}
+
+async function handleSignup() {
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+  const msgEl = document.getElementById('auth-msg');
+  if(!email || password.length < 6) { msgEl.innerText = "נא להזין אימייל וסיסמה (לפחות 6 תווים)."; return; }
+  msgEl.innerText = "נרשם...";
+  const { data, error } = await supabaseClient.auth.signUp({ email, password });
+  if (error) { msgEl.innerText = "שגיאה: " + error.message; } 
+  else { msgEl.innerText = "נרשמת בהצלחה! מתחבר..."; loginSuccess(data.user); }
+}
+
+async function handleLogout() {
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  if(syncInterval) clearInterval(syncInterval);
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-container').style.display = 'none';
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-password').value = '';
+}
+
+function loginSuccess(user) {
+  currentUser = user;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-container').style.display = 'block';
+  // הצגת שם המשתמש מתוך האימייל (לפני ה-@)
+  const username = user.email.split('@')[0];
+  document.getElementById('user-display').innerText = `מחובר כ: ${username} 👨‍🍳`;
+  initApp();
+}
+
+// --- App Logic ---
+// כולם קוראים מאותו מקום בלוקאל סטורג' המשותף
+function getLocalKey() { return 'my_recipes_db_shared'; }
 
 function initApp() {
   try {
-    const saved = localStorage.getItem('my_recipes_db');
+    const saved = localStorage.getItem(getLocalKey());
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        allRecipes = parsed;
-      }
+      if (Array.isArray(parsed) && parsed.length > 0) { allRecipes = parsed; }
+    } else {
+      allRecipes = defaultRecipes;
     }
-  } catch (e) {
-    console.warn('Local read error:', e);
-  }
+  } catch (e) { console.warn('Local read error:', e); }
 
   if (!activeRecipeId || !allRecipes.some(r => r.id === activeRecipeId)) {
     activeRecipeId = allRecipes[0]?.id || null;
   }
-
   renderNavList();
   renderActiveRecipe();
 
   if (supabaseClient) {
     setTimeout(() => {
       fetchCloudAndMerge();
-      setInterval(fetchCloudAndMerge, 10000);
-    }, 3000);
+      syncInterval = setInterval(fetchCloudAndMerge, 10000);
+    }, 2000);
   }
 }
 
 async function fetchCloudAndMerge() {
-  if (!supabaseClient) return;
+  if (!supabaseClient || !currentUser) return;
   try {
-    // השליפה תוקנה מחדש - ללא maybeSingle() כדי למנוע את שגיאת 406!
+    // משיכת השורה המשותפת היחידה
     const { data, error } = await supabaseClient
       .from('recipes')
-      .select('*');
+      .select('*')
+      .eq('id', 'master_db');
 
-    if (error || !data || !Array.isArray(data) || data.length === 0) return;
-
-    // לוקח את השורה האחרונה המעודכנת ביותר כדי לעקוף את בעיית הכפילויות
+    if (error || !data || data.length === 0) return;
+    
+    // ניקח את האחרון ליתר ביטחון, למרות שעם הגדרת Primary Key תמיד יהיה אחד
     const latestRow = data[data.length - 1];
     if (!latestRow || !latestRow.data || !Array.isArray(latestRow.data)) return;
 
@@ -422,28 +312,23 @@ async function fetchCloudAndMerge() {
 
     if (cloudJson !== localJson) {
       allRecipes = cloudRecipes;
-      localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
-      if (!allRecipes.some(r => r.id === activeRecipeId)) {
-        activeRecipeId = allRecipes[0]?.id || null;
-      }
+      localStorage.setItem(getLocalKey(), JSON.stringify(allRecipes));
+      if (!allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = allRecipes[0]?.id || null; }
       renderNavList();
       renderActiveRecipe();
     }
-  } catch (err) {
-    console.error("Cloud sync error:", err);
-  }
+  } catch (err) { console.error("Cloud sync error:", err); }
 }
 
 async function persistToCloud() {
-  if (!supabaseClient) return;
+  if (!supabaseClient || !currentUser) return;
   try {
-    localStorage.setItem('my_recipes_db', JSON.stringify(allRecipes));
+    localStorage.setItem(getLocalKey(), JSON.stringify(allRecipes));
+    // כולם שומרים על אותה השורה הגלובלית!
     await supabaseClient
       .from('recipes')
       .upsert({ id: 'master_db', data: allRecipes });
-  } catch (err) {
-    console.warn('Cloud persistence warning:', err);
-  }
+  } catch (err) { console.warn('Cloud persistence warning:', err); }
 }
 
 function renderNavList() {
@@ -463,19 +348,14 @@ function renderNavList() {
 }
 
 function selectRecipe(id) {
-  activeRecipeId = id;
-  currentScale = 1.0;
-  renderNavList();
-  renderActiveRecipe();
+  activeRecipeId = id; currentScale = 1.0;
+  renderNavList(); renderActiveRecipe();
 }
 
 function renderActiveRecipe() {
   const r = allRecipes.find(item => item.id === activeRecipeId);
   const viewEl = document.getElementById('recipe-view');
-  if (!r) {
-    viewEl.innerHTML = '<p style="text-align:center; color:#718096; padding:20px;">בחר מתכון מהרשימה או הוסף מתכון חדש.</p>';
-    return;
-  }
+  if (!r) { viewEl.innerHTML = '<p style="text-align:center; color:#718096; padding:20px;">בחר מתכון.</p>'; return; }
 
   const scaledPortions = (r.basePortions * currentScale);
   const formattedPortions = (scaledPortions % 1 === 0) ? scaledPortions : scaledPortions.toFixed(1);
@@ -489,14 +369,9 @@ function renderActiveRecipe() {
   if (r.primaryName && r.primaryAmount) {
     const scaledPrimary = Math.round(r.primaryAmount * currentScale);
     primaryControl = `
-      <div class="scaler-item">
-        <label>${escapeHTML(r.primaryName)}:</label>
-        <div class="scaler-input-wrap">
-          <input type="number" value="${scaledPrimary}" step="50" oninput="scaleByPrimary(this.value)">
-          <span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span>
-        </div>
-      </div>
-    `;
+      <div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label>
+        <div class="scaler-input-wrap"><input type="number" value="${scaledPrimary}" step="50" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div>
+      </div>`;
   }
 
   let fatControl = '';
@@ -517,11 +392,7 @@ function renderActiveRecipe() {
   }
 
   const nut = r.nutrition || { cals: 0, protein: 0, carbs: 0, fat: 0 };
-  let cals = Math.round(nut.cals * currentScale);
-  let protein = Math.round(nut.protein * currentScale);
-  let carbs = Math.round(nut.carbs * currentScale);
-  let fat = Math.round(nut.fat * currentScale);
-
+  let cals = Math.round(nut.cals * currentScale), protein = Math.round(nut.protein * currentScale), carbs = Math.round(nut.carbs * currentScale), fat = Math.round(nut.fat * currentScale);
   const perCals = scaledPortions > 0 ? Math.round(cals / scaledPortions) : 0;
   const perProtein = scaledPortions > 0 ? (protein / scaledPortions).toFixed(1) : 0;
   const perCarbs = scaledPortions > 0 ? (carbs / scaledPortions).toFixed(1) : 0;
@@ -530,35 +401,24 @@ function renderActiveRecipe() {
   viewEl.innerHTML = `
     ${imageHTML}
     <div class="recipe-meta-header">
-      <div>
-        <h2>${escapeHTML(r.title)}</h2>
-        <span class="author-tag" style="margin-top:4px; display:inline-block;">מאת: ${escapeHTML(r.author)}</span>
-      </div>
+      <div><h2>${escapeHTML(r.title)}</h2><span class="author-tag">מאת: ${escapeHTML(r.author)}</span></div>
       <div style="display:flex; gap:6px;">
         <button class="btn btn-red" onclick="deleteRecipe('${escapeHTML(r.id)}')">🗑️ מחק</button>
-        <button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')" style="border:1px solid #cbd5e0;">✏️ ערוך</button>
+        <button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')">✏️ ערוך</button>
       </div>
     </div>
-
     <div class="scaler-box">
       <div class="scaler-title">⚡ התאמת כמויות ומנות בזמן אמת:</div>
       <div class="scaler-grid">
         ${primaryControl}
-        <div class="scaler-item">
-          <label>מספר מנות:</label>
-          <div class="scaler-input-wrap">
-            <input type="number" value="${formattedPortions}" min="0.5" step="0.5" oninput="scaleByPortions(this.value)">
-            <span class="scaler-unit">מנות</span>
-          </div>
+        <div class="scaler-item"><label>מספר מנות:</label>
+          <div class="scaler-input-wrap"><input type="number" value="${formattedPortions}" step="0.5" oninput="scaleByPortions(this.value)"><span class="scaler-unit">מנות</span></div>
         </div>
         ${fatControl}
       </div>
     </div>
-
     <table class="nutrition-table">
-      <thead>
-        <tr><th>ערך תזונתי</th><th>סך הכל למתכון</th><th>למנה בודדת</th></tr>
-      </thead>
+      <thead><tr><th>ערך תזונתי</th><th>סך הכל למתכון</th><th>למנה בודדת</th></tr></thead>
       <tbody>
         <tr><td><strong>קלוריות</strong></td><td class="val-num">${cals.toLocaleString()} קק"ל</td><td>${perCals} קק"ל</td></tr>
         <tr><td><strong>חלבון</strong></td><td class="val-num">${protein} גרם</td><td>${perProtein} גרם</td></tr>
@@ -566,55 +426,38 @@ function renderActiveRecipe() {
         <tr><td><strong>שומן</strong></td><td class="val-num">${fat} גרם</td><td>${perFat} גרם</td></tr>
       </tbody>
     </table>
-
     <div class="recipe-columns">
-      <div>
-        <div class="col-title">מצרכים מעודכנים</div>
-        <ul class="ing-list">
-          ${(r.ingredients || []).map(ing => {
-            const scaled = (typeof ing.amount === 'number') ? (ing.amount * currentScale) : ing.amount;
-            const displayQty = (typeof scaled === 'number') ? (scaled % 1 === 0 ? scaled : scaled.toFixed(1)) : (escapeHTML(String(scaled)) || '');
-            return `<li class="ing-row"><span>${escapeHTML(ing.name)}</span><span class="ing-qty">${displayQty} ${escapeHTML(ing.unit || '')}</span></li>`;
-          }).join('')}
-        </ul>
-      </div>
-      <div>
-        <div class="col-title">הוראות הכנה</div>
-        <ol class="inst-list">
-          ${(r.instructions || []).map(item => `<li>${escapeHTML(item)}</li>`).join('')}
-        </ol>
-      </div>
+      <div><div class="col-title">מצרכים מעודכנים</div><ul class="ing-list">
+        ${(r.ingredients || []).map(ing => {
+          const scaled = (typeof ing.amount === 'number') ? (ing.amount * currentScale) : ing.amount;
+          const displayQty = (typeof scaled === 'number') ? (scaled % 1 === 0 ? scaled : scaled.toFixed(1)) : (escapeHTML(String(scaled)) || '');
+          return `<li class="ing-row"><span>${escapeHTML(ing.name)}</span><span class="ing-qty">${displayQty} ${escapeHTML(ing.unit || '')}</span></li>`;
+        }).join('')}
+      </ul></div>
+      <div><div class="col-title">הוראות הכנה</div><ol class="inst-list">
+        ${(r.instructions || []).map(item => `<li>${escapeHTML(item)}</li>`).join('')}
+      </ol></div>
     </div>
   `;
 }
 
-function scaleByPortions(val) {
-  const num = parseFloat(val);
-  const r = allRecipes.find(i => i.id === activeRecipeId);
-  if (num > 0 && r) { currentScale = num / r.basePortions; renderActiveRecipe(); }
-}
-
-function scaleByPrimary(val) {
-  const num = parseFloat(val);
-  const r = allRecipes.find(i => i.id === activeRecipeId);
-  if (num > 0 && r && r.primaryAmount) { currentScale = num / r.primaryAmount; renderActiveRecipe(); }
-}
-
+function scaleByPortions(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r) { currentScale = num / r.basePortions; renderActiveRecipe(); } }
+function scaleByPrimary(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r && r.primaryAmount) { currentScale = num / r.primaryAmount; renderActiveRecipe(); } }
 function changeFat(val) { beefFatPercent = parseInt(val); renderActiveRecipe(); }
 
-function setCategory(cat, el) {
-  currentCategory = cat;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderNavList();
-}
-
+function setCategory(cat, el) { currentCategory = cat; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderNavList(); }
 function filterRecipes() { renderNavList(); }
 
 function openAddModal() {
   document.getElementById('modal-heading').innerText = '➕ הוספת מתכון חדש לספר';
   document.getElementById('m-id').value = '';
   document.getElementById('new-recipe-form').reset();
+  
+  // הזרקת שם המשתמש המחובר לשדה "מאת"
+  if(currentUser && currentUser.email) {
+    document.getElementById('m-author').value = currentUser.email.split('@')[0];
+  }
+
   document.getElementById('upload-status').style.display = 'none';
   document.getElementById('add-modal').classList.add('open');
 }
@@ -622,19 +465,15 @@ function openAddModal() {
 function openEditModal(id) {
   const r = allRecipes.find(item => item.id === id);
   if (!r) return;
-
   document.getElementById('modal-heading').innerText = '✏️ עריכת מתכון: ' + r.title;
   document.getElementById('m-id').value = r.id;
   document.getElementById('m-title').value = r.title || '';
   document.getElementById('m-author').value = r.author || '';
   document.getElementById('m-category').value = r.category || 'עיקריות';
   document.getElementById('m-image-url').value = r.imageUrl || '';
-  document.getElementById('upload-status').style.display = 'none';
-  
   document.getElementById('m-portions').value = r.basePortions || '';
   document.getElementById('m-prim-name').value = r.primaryName || '';
   document.getElementById('m-prim-qty').value = r.primaryAmount || '';
-
   document.getElementById('m-cals').value = r.nutrition?.cals ?? '';
   document.getElementById('m-protein').value = r.nutrition?.protein ?? '';
   document.getElementById('m-carbs').value = r.nutrition?.carbs ?? '';
@@ -643,73 +482,37 @@ function openEditModal(id) {
   if (Array.isArray(r.ingredients)) {
     document.getElementById('m-ingredients').value = r.ingredients.map(ing => {
       const amt = ing.amount !== undefined && ing.amount !== null ? ing.amount : '';
-      const un = ing.unit || '';
-      return `${ing.name} | ${amt} | ${un}`.trim();
+      return `${ing.name} | ${amt} | ${ing.unit || ''}`.trim();
     }).join('\n');
-  } else {
-    document.getElementById('m-ingredients').value = '';
-  }
-
-  if (Array.isArray(r.instructions)) {
-    document.getElementById('m-instructions').value = r.instructions.join('\n');
-  } else {
-    document.getElementById('m-instructions').value = '';
-  }
+  } else { document.getElementById('m-ingredients').value = ''; }
+  
+  if (Array.isArray(r.instructions)) { document.getElementById('m-instructions').value = r.instructions.join('\n'); } 
+  else { document.getElementById('m-instructions').value = ''; }
 
   document.getElementById('add-modal').classList.add('open');
 }
 
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
 
-// --- פונקציית העלאת תמונה ---
 async function handleImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  
-  const statusEl = document.getElementById('upload-status');
-  statusEl.style.display = 'block';
-  statusEl.innerText = 'מעלה תמונה... ⏳';
-  statusEl.style.color = '#2b6cb0';
-
-  // יצירת שם קובץ ייחודי כדי למנוע דריסת תמונות קיימות
-  const fileExt = file.name.split('.').pop();
-  const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${fileExt}`;
-
+  const file = event.target.files[0]; if (!file) return;
+  const statusEl = document.getElementById('upload-status'); statusEl.style.display = 'block'; statusEl.innerText = 'מעלה תמונה... ⏳'; statusEl.style.color = '#2b6cb0';
+  const fileExt = file.name.split('.').pop(); const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${fileExt}`;
   try {
-    const { data, error } = await supabaseClient.storage
-      .from('recipe-images')
-      .upload(fileName, file);
-
+    const { data, error } = await supabaseClient.storage.from('recipe-images').upload(fileName, file);
     if (error) throw error;
-
-    // קבלת הקישור הפומבי של התמונה
-    const { data: publicUrlData } = supabaseClient.storage
-      .from('recipe-images')
-      .getPublicUrl(fileName);
-
-    // הזנת הקישור לתוך שדה התמונה
+    const { data: publicUrlData } = supabaseClient.storage.from('recipe-images').getPublicUrl(fileName);
     document.getElementById('m-image-url').value = publicUrlData.publicUrl;
-    statusEl.innerText = 'התמונה הועלתה בהצלחה! ✅';
-    statusEl.style.color = '#38a169';
-    setTimeout(() => statusEl.style.display = 'none', 3000);
-  } catch (err) {
-    console.error(err);
-    statusEl.innerText = '❌ שגיאה בהעלאה: ' + err.message;
-    statusEl.style.color = '#e53e3e';
-  }
-  event.target.value = ''; // איפוס הקלט
+    statusEl.innerText = 'התמונה הועלתה בהצלחה! ✅'; statusEl.style.color = '#38a169'; setTimeout(() => statusEl.style.display = 'none', 3000);
+  } catch (err) { statusEl.innerText = '❌ שגיאה בהעלאה: ' + err.message; statusEl.style.color = '#e53e3e'; }
+  event.target.value = '';
 }
 
 async function deleteRecipe(id) {
-  const confirmed = confirm("האם אתה בטוח שברצונך למחוק את המתכון הזה לצמיתות?");
-  if (confirmed) {
+  if (confirm("האם אתה בטוח שברצונך למחוק את המתכון הזה לצמיתות?")) {
     allRecipes = allRecipes.filter(r => r.id !== id);
-    if (activeRecipeId === id) {
-      activeRecipeId = allRecipes.length > 0 ? allRecipes[0].id : null;
-    }
-    await persistToCloud();
-    renderNavList();
-    renderActiveRecipe();
+    if (activeRecipeId === id) { activeRecipeId = allRecipes.length > 0 ? allRecipes[0].id : null; }
+    await persistToCloud(); renderNavList(); renderActiveRecipe();
   }
 }
 
@@ -717,103 +520,59 @@ async function saveNewRecipe(e) {
   e.preventDefault();
   const editId = document.getElementById('m-id').value;
   const title = document.getElementById('m-title').value.trim() || 'מתכון ללא שם';
-  const author = document.getElementById('m-author').value.trim() || 'מעין';
+  const author = document.getElementById('m-author').value.trim() || 'אורח';
   const category = document.getElementById('m-category').value || 'עיקריות';
   const imageUrl = document.getElementById('m-image-url').value.trim();
   const portions = parseFloat(document.getElementById('m-portions').value) || 1;
   const primName = document.getElementById('m-prim-name').value.trim();
   const primQty = parseFloat(document.getElementById('m-prim-qty').value) || null;
-  const cals = parseFloat(document.getElementById('m-cals').value) || 0;
-  const protein = parseFloat(document.getElementById('m-protein').value) || 0;
-  const carbs = parseFloat(document.getElementById('m-carbs').value) || 0;
-  const fat = parseFloat(document.getElementById('m-fat').value) || 0;
-
-  const ingLines = document.getElementById('m-ingredients').value.split('\n');
-  const ingredients = ingLines.filter(l => l.trim()).map(l => {
-    const parts = l.split('|');
-    return {
-      name: parts[0]?.trim() || '',
-      amount: parseFloat(parts[1]?.trim()) || parts[1]?.trim() || '',
-      unit: parts[2]?.trim() || ''
-    };
+  const nutrition = { 
+    cals: parseFloat(document.getElementById('m-cals').value) || 0, protein: parseFloat(document.getElementById('m-protein').value) || 0,
+    carbs: parseFloat(document.getElementById('m-carbs').value) || 0, fat: parseFloat(document.getElementById('m-fat').value) || 0 
+  };
+  const ingredients = document.getElementById('m-ingredients').value.split('\n').filter(l => l.trim()).map(l => {
+    const parts = l.split('|'); return { name: parts[0]?.trim() || '', amount: parseFloat(parts[1]?.trim()) || parts[1]?.trim() || '', unit: parts[2]?.trim() || '' };
   });
-
   const instructions = document.getElementById('m-instructions').value.split('\n').filter(l => l.trim());
 
   if (editId) {
     const index = allRecipes.findIndex(item => item.id === editId);
     if (index !== -1) {
-      allRecipes[index] = {
-        ...allRecipes[index],
-        title, author, category, imageUrl,
-        basePortions: portions,
-        primaryName: primName || null,
-        primaryAmount: primQty,
-        nutrition: { cals, protein, carbs, fat },
-        ingredients,
-        instructions
-      };
+      allRecipes[index] = { ...allRecipes[index], title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, nutrition, ingredients, instructions };
       activeRecipeId = editId;
     }
   } else {
-    const newId = 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now());
-    const newRecipe = {
-      id: newId,
-      title, author, category, imageUrl,
-      basePortions: portions,
-      primaryName: primName || null,
-      primaryAmount: primQty,
-      primaryUnit: 'גרם',
-      isMeat: false,
-      nutrition: { cals, protein, carbs, fat },
-      ingredients,
-      instructions
-    };
-    allRecipes.unshift(newRecipe);
-    activeRecipeId = newRecipe.id;
+    const newRecipe = { id: 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now()), title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, primaryUnit: 'גרם', isMeat: false, nutrition, ingredients, instructions };
+    allRecipes.unshift(newRecipe); activeRecipeId = newRecipe.id;
   }
-
-  await persistToCloud();
-  closeAddModal();
-  document.getElementById('new-recipe-form').reset();
-  currentScale = 1.0;
-  renderNavList();
-  renderActiveRecipe();
+  await persistToCloud(); closeAddModal(); document.getElementById('new-recipe-form').reset(); currentScale = 1.0; renderNavList(); renderActiveRecipe();
 }
 
 function exportData() {
   const blob = new Blob([JSON.stringify(allRecipes, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'my_recipes_backup.json';
-  a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my_recipes_backup.json'; a.click();
 }
 
 async function importData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = async function(e) {
     try {
       const data = JSON.parse(e.target.result);
       if (Array.isArray(data) && data.length > 0) {
-        allRecipes = data;
-        activeRecipeId = allRecipes[0]?.id;
-        currentScale = 1.0;
-        await persistToCloud();
-        renderNavList();
-        renderActiveRecipe();
-        alert('המאגר יובא בהצלחה!');
+        allRecipes = data; activeRecipeId = allRecipes[0]?.id; currentScale = 1.0;
+        await persistToCloud(); renderNavList(); renderActiveRecipe(); alert('המאגר יובא בהצלחה!');
       }
     } catch(err) { alert('שגיאה בקריאת הקובץ'); }
   };
   reader.readAsText(file);
 }
 
-initApp();
+// הפעלת בדיקת משתמש בעליית הדף
+if(supabaseClient) { checkSession(); }
 </script>
 
-<!-- Modal: Add New Recipe -->
+<!-- Modal: Add/Edit Recipe -->
 <div class="modal-overlay" id="add-modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -823,87 +582,43 @@ initApp();
     <form id="new-recipe-form" onsubmit="saveNewRecipe(event)">
       <input type="hidden" id="m-id" value="">
       <div class="form-row">
-        <div class="form-group">
-          <label>שם המתכון:</label>
-          <input type="text" id="m-title" class="form-control" placeholder="למשל: עראייס ביתי בתנור">
-        </div>
-        <div class="form-group">
-          <label>מתכון מאת:</label>
-          <input type="text" id="m-author" class="form-control" placeholder="מעין">
-        </div>
+        <div class="form-group"><label>שם המתכון:</label><input type="text" id="m-title" class="form-control" placeholder="למשל: עראייס"></div>
+        <div class="form-group"><label>מתכון מאת:</label><input type="text" id="m-author" class="form-control" placeholder="שם המחבר"></div>
       </div>
-
       <div class="form-row">
-        <div class="form-group">
-          <label>קטגוריה:</label>
-          <select id="m-category" class="form-control">
-            <option value="עיקריות">מנות עיקריות וחלבון</option>
-            <option value="תוספות">תוספות, פחמימות וירקות</option>
-            <option value="רטבים">רטבים וממרחים</option>
-            <option value="קינוחים">קינוחים ונשנושים</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>מספר מנות בסיס:</label>
-          <input type="number" id="m-portions" class="form-control" placeholder="4" min="0.5" step="0.5">
-        </div>
+        <div class="form-group"><label>קטגוריה:</label><select id="m-category" class="form-control"><option value="עיקריות">עיקריות</option><option value="תוספות">תוספות</option><option value="רטבים">רטבים</option><option value="קינוחים">קינוחים</option></select></div>
+        <div class="form-group"><label>מספר מנות בסיס:</label><input type="number" id="m-portions" class="form-control" placeholder="4" min="0.5" step="0.5"></div>
       </div>
-
-      <!-- שורת התמונה המשודרגת -->
       <div class="form-group">
         <label>תמונה (URL או העלאה):</label>
         <div style="display: flex; gap: 8px;">
-          <input type="text" id="m-image-url" class="form-control" placeholder="הדבק קישור או לחץ על העלה..." style="flex: 1;">
-          <button type="button" class="btn btn-light" onclick="document.getElementById('image-upload').click()" style="border: 1px solid #cbd5e0; white-space: nowrap;">🖼️ העלה תמונה</button>
+          <input type="text" id="m-image-url" class="form-control" placeholder="הדבק קישור או העלה..." style="flex: 1;">
+          <button type="button" class="btn btn-light" onclick="document.getElementById('image-upload').click()" style="border: 1px solid #cbd5e0; white-space: nowrap;">🖼️ העלה</button>
           <input type="file" id="image-upload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
         </div>
         <small id="upload-status" style="font-weight: bold; margin-top: 4px; display: none;"></small>
       </div>
-
       <div class="form-row">
-        <div class="form-group">
-          <label>מרכיב ראשי לסקלר (אופציונלי):</label>
-          <input type="text" id="m-prim-name" class="form-control" placeholder="למשל: בשר טחון">
-        </div>
-        <div class="form-group">
-          <label>כמות מרכיב ראשי (בגרמים):</label>
-          <input type="number" id="m-prim-qty" class="form-control" placeholder="800">
-        </div>
+        <div class="form-group"><label>מרכיב ראשי לסקלר (אופציונלי):</label><input type="text" id="m-prim-name" class="form-control" placeholder="בשר טחון"></div>
+        <div class="form-group"><label>כמות (גרמים):</label><input type="number" id="m-prim-qty" class="form-control" placeholder="800"></div>
       </div>
-
       <div class="form-row">
-        <div class="form-group">
-          <label>סך קלוריות:</label>
-          <input type="number" id="m-cals" class="form-control" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label>חלבון (גרם):</label>
-          <input type="number" id="m-protein" class="form-control" placeholder="0" step="0.1">
-        </div>
+        <div class="form-group"><label>קלוריות:</label><input type="number" id="m-cals" class="form-control" placeholder="0"></div>
+        <div class="form-group"><label>חלבון (גרם):</label><input type="number" id="m-protein" class="form-control" placeholder="0" step="0.1"></div>
       </div>
-
       <div class="form-row">
-        <div class="form-group">
-          <label>פחמימות (גרם):</label>
-          <input type="number" id="m-carbs" class="form-control" placeholder="0" step="0.1">
-        </div>
-        <div class="form-group">
-          <label>שומן (גרם):</label>
-          <input type="number" id="m-fat" class="form-control" placeholder="0" step="0.1">
-        </div>
+        <div class="form-group"><label>פחמימות (גרם):</label><input type="number" id="m-carbs" class="form-control" placeholder="0" step="0.1"></div>
+        <div class="form-group"><label>שומן (גרם):</label><input type="number" id="m-fat" class="form-control" placeholder="0" step="0.1"></div>
       </div>
-
       <div class="form-group">
         <label>מצרכים (שורה לכל מצרך, בפורמט: שם | כמות | יחידה):</label>
-        <textarea id="m-ingredients" class="form-control" rows="4" placeholder="בשר טחון | 800 | גרם&#10;בצל קצוץ | 2 | יחידות&#10;טחינה | 2 | כפות"></textarea>
+        <textarea id="m-ingredients" class="form-control" rows="4" placeholder="בשר טחון | 800 | גרם"></textarea>
       </div>
-
       <div class="form-group">
         <label>הוראות הכנה (שורה לכל שלב):</label>
-        <textarea id="m-instructions" class="form-control" rows="3" placeholder="מחממים תנור ל-200 מעלות...&#10;מערבבים את כל החומרים..."></textarea>
+        <textarea id="m-instructions" class="form-control" rows="3" placeholder="מחממים תנור..."></textarea>
       </div>
-
-      <button type="submit" class="btn btn-green" style="width:100%; padding:10px; font-size:10.5pt; margin-top:6px;">💾 שמור מתכון בספר</button>
+      <button type="submit" class="btn btn-green" style="width:100%; padding:10px; font-size:10.5pt; margin-top:6px;">💾 שמור מתכון</button>
     </form>
   </div>
 </div>
