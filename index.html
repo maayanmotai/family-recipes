@@ -667,7 +667,8 @@ function previewAiImage(e) {
 function clearAiImage() {
   aiImageData = null;
   aiImageMime = null;
-  document.getElementById('ai-image-upload').value = '';
+  document.getElementById('ai-image-upload-camera').value = '';
+  document.getElementById('ai-image-upload-gallery').value = '';
   document.getElementById('ai-image-preview-container').style.display = 'none';
 }
 
@@ -845,9 +846,13 @@ checkSession();
         <textarea id="ai-input-text" class="form-control" rows="4" placeholder="הדבק לכאן מתכון מבולגן, או לחלופין צלם תמונה של מתכון 👇..." style="margin-bottom: 10px; font-size: 9.5pt;"></textarea>
         
         <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-          <input type="file" id="ai-image-upload" accept="image/*" style="display:none" onchange="previewAiImage(event)">
-          <button type="button" class="btn btn-light" style="flex: 1; border-color: #c7d2fe; color: #4338ca;" onclick="document.getElementById('ai-image-upload').click()">
-            <i class="fa-solid fa-camera"></i> בחר תמונה / צלם
+          <input type="file" id="ai-image-upload-camera" accept="image/*" capture="environment" style="display:none" onchange="previewAiImage(event)">
+          <input type="file" id="ai-image-upload-gallery" accept="image/*" style="display:none" onchange="previewAiImage(event)">
+          <button type="button" class="btn btn-light" style="flex: 1; border-color: #c7d2fe; color: #4338ca;" onclick="document.getElementById('ai-image-upload-camera').click()">
+            <i class="fa-solid fa-camera"></i> צלם מתכון
+          </button>
+          <button type="button" class="btn btn-light" style="flex: 1; border-color: #c7d2fe; color: #4338ca;" onclick="document.getElementById('ai-image-upload-gallery').click()">
+            <i class="fa-regular fa-image"></i> בחר מהגלריה
           </button>
           <div id="ai-image-preview-container" style="display:none; align-items:center; gap:8px;">
             <img id="ai-image-preview" style="height: 36px; border-radius: 4px; border: 1px solid #c7d2fe;">
