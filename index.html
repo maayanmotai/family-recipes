@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ספר המתכונים הגדול של משפחת מוטאי סניבר</title>
 
-<!-- Google Fonts & Font Awesome for professional typography and icons -->
+<!-- Google Fonts & Font Awesome -->
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <style>
   :root { 
-    --primary: #cf6a4c; /* Terracotta/Warm orange */
+    --primary: #cf6a4c; 
     --primary-dark: #b55539; 
-    --secondary: #3b4d41; /* Forest/Sage green */
+    --secondary: #3b4d41; 
     --secondary-light: #4e6355;
-    --bg: #f9f8f6; /* Warm off-white */
+    --bg: #f9f8f6; 
     --surface: #ffffff;
-    --text: #2c2a29; /* Soft black */
+    --text: #2c2a29; 
     --text-light: #7a7571;
     --border: #e8e6e1; 
     --shadow-soft: 0 8px 30px rgba(0,0,0,0.04);
@@ -25,58 +25,26 @@
   }
   
   * { box-sizing: border-box; }
-  
-  body { 
-    margin: 0; padding: 14px; 
-    font-family: 'Assistant', sans-serif; 
-    background-color: var(--bg); 
-    color: var(--text); 
-    direction: rtl; 
-    line-height: 1.6; 
-  }
+  body { margin: 0; padding: 14px; font-family: 'Assistant', sans-serif; background-color: var(--bg); color: var(--text); direction: rtl; line-height: 1.6; }
   
   /* Auth Screen Overlay */
-  #auth-screen {
-    position: fixed; inset: 0; background: var(--secondary); 
-    display: flex; align-items: center; justify-content: center; z-index: 9999;
-  }
-  .auth-box { 
-    background: var(--surface); padding: 40px; border-radius: 16px; 
-    width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); 
-    text-align: center; 
-  }
+  #auth-screen { position: fixed; inset: 0; background: var(--secondary); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+  .auth-box { background: var(--surface); padding: 40px; border-radius: 16px; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); text-align: center; }
   .auth-box h2 { margin-top: 0; color: var(--secondary); font-weight: 800; font-size: 1.5rem; margin-bottom: 24px; }
-  .auth-box input { 
-    width: 100%; padding: 12px 14px; margin-bottom: 16px; 
-    border: 1px solid var(--border); border-radius: 8px; font-size: 11pt; 
-    outline: none; font-family: inherit; transition: border-color 0.2s;
-  }
+  .auth-box input { width: 100%; padding: 12px 14px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; font-size: 11pt; outline: none; font-family: inherit; transition: border-color 0.2s; }
   .auth-box input:focus { border-color: var(--primary); }
-  .auth-box button { 
-    width: 100%; padding: 12px; font-size: 11pt; margin-bottom: 12px; 
-    border-radius: 8px; font-weight: 700; cursor: pointer; border: none; 
-    transition: all 0.2s; font-family: inherit;
-  }
+  .auth-box button { width: 100%; padding: 12px; font-size: 11pt; margin-bottom: 12px; border-radius: 8px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; font-family: inherit; }
   .auth-msg { font-size: 9.5pt; color: #e53e3e; margin-bottom: 16px; min-height: 18px; font-weight: 600; }
 
   /* Main App Container */
   #app-container { display: none; }
   .container { max-width: 1050px; margin: 0 auto; }
   
-  .app-header { 
-    background: var(--secondary); color: #fff; padding: 24px 28px; 
-    border-radius: 16px; margin-bottom: 24px; display: flex; 
-    justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; 
-    box-shadow: var(--shadow-soft);
-  }
+  .app-header { background: var(--secondary); color: #fff; padding: 24px 28px; border-radius: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-soft); }
   .app-title h1 { margin: 0; font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; }
   .app-title p { margin: 4px 0 0 0; font-size: 10pt; opacity: 0.85; font-weight: 400; }
   
-  .btn { 
-    padding: 10px 16px; border-radius: 8px; font-size: 9.5pt; font-weight: 600; 
-    cursor: pointer; border: none; font-family: inherit; transition: all 0.2s ease;
-    display: inline-flex; align-items: center; gap: 6px;
-  }
+  .btn { padding: 10px 16px; border-radius: 8px; font-size: 9.5pt; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
   .app-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   
   .btn-green { background: var(--primary); color: #fff; }
@@ -88,7 +56,7 @@
   .btn-logout { background: rgba(255,255,255,0.1); color: #fff; }
   .btn-logout:hover { background: rgba(255,255,255,0.2); }
 
-  /* Modal Dialog */
+  /* Modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; backdrop-filter: blur(4px); }
   .modal-overlay.open { display: flex; }
   .modal-box { background: var(--surface); width: 100%; max-width: 650px; border-radius: 16px; max-height: 90vh; overflow-y: auto; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -102,6 +70,9 @@
   .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 10pt; outline: none; font-family: inherit; background: #faf9f7; transition: border-color 0.2s; }
   .form-control:focus { border-color: var(--primary); background: #fff; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .checkbox-wrap { display: flex; align-items: center; gap: 8px; background: #fdf3f0; padding: 10px 12px; border-radius: 8px; border: 1px solid #f8e1d9; }
+  .checkbox-wrap input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary); }
+  .checkbox-wrap label { margin: 0; cursor: pointer; color: var(--primary-dark); }
 
   /* Filtering */
   .filter-bar { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
@@ -114,27 +85,28 @@
   .chip { padding: 8px 16px; border-radius: 20px; font-size: 9.5pt; font-weight: 600; cursor: pointer; background: var(--surface); border: 1px solid var(--border); color: var(--text-light); box-shadow: 0 2px 5px rgba(0,0,0,0.02); transition: all 0.2s; }
   .chip:hover { border-color: var(--secondary-light); color: var(--secondary); }
   .chip.active { background: var(--secondary); color: #fff; border-color: var(--secondary); box-shadow: 0 4px 10px rgba(59, 77, 65, 0.2); }
+  .chip.fav-chip.active { background: #e53e3e; border-color: #e53e3e; box-shadow: 0 4px 10px rgba(229, 62, 62, 0.2); }
   
   .layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; }
   @media (max-width: 850px) { .layout { grid-template-columns: 1fr; } }
   
-  /* Recipe List Navigation */
+  /* Recipe Nav */
   .recipe-nav { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; max-height: calc(100vh - 200px); overflow-y: auto; box-shadow: var(--shadow-soft); }
-  .nav-item { padding: 12px 14px; border-radius: 10px; cursor: pointer; margin-bottom: 6px; border: 1px solid transparent; transition: all 0.2s; }
+  .nav-item { padding: 12px 14px; border-radius: 10px; cursor: pointer; margin-bottom: 6px; border: 1px solid transparent; transition: all 0.2s; position: relative; }
   .nav-item:hover { background: var(--bg); border-color: var(--border); }
   .nav-item.active { background: #f5f2eb; border-color: #e4dfd1; border-right: 4px solid var(--primary); }
-  .nav-item-title { font-size: 11pt; color: var(--text); font-weight: 700; display: block; margin-bottom: 2px; }
+  .nav-item-title { font-size: 11pt; color: var(--text); font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
   .nav-item-sub { font-size: 8.5pt; color: var(--text-light); }
   
-  /* Recipe Viewer */
+  /* Viewer */
   .recipe-viewer { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-soft); }
   .recipe-cover-img { width: 100%; height: 280px; object-fit: cover; border-radius: 12px; margin-bottom: 24px; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
   
   .recipe-meta-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
-  .recipe-meta-header h2 { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--secondary); line-height: 1.2; }
+  .recipe-meta-header h2 { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--secondary); line-height: 1.2; display: flex; align-items: center; gap: 8px; }
   .author-tag { display: inline-flex; align-items: center; gap: 6px; background: #f5f2eb; color: var(--secondary-light); padding: 4px 12px; border-radius: 20px; font-size: 9pt; font-weight: 600; margin-top: 8px; }
   
-  /* Dynamic Scaler */
+  /* Scaler */
   .scaler-box { background: #fbfaf9; border: 1px solid #eeebe5; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
   .scaler-title { font-weight: 800; color: var(--secondary); font-size: 10.5pt; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
   .scaler-title i { color: var(--primary); }
@@ -145,16 +117,14 @@
   .scaler-input-wrap input, .scaler-input-wrap select { width: 100%; padding: 8px 10px; border: none; font-size: 11pt; font-weight: 700; text-align: center; outline: none; color: var(--text); background: transparent; font-family: inherit; }
   .scaler-unit { padding: 0 12px; background: #f4f3f0; color: var(--text-light); font-size: 9pt; font-weight: 600; display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); height: 100%; }
   
-  /* Nutrition Table */
+  /* Nutrition & Columns */
   .nutrition-table { width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 9.5pt; }
   .nutrition-table th, .nutrition-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: right; }
-  .nutrition-table th { color: var(--text-light); font-weight: 600; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5px; }
+  .nutrition-table th { color: var(--text-light); font-weight: 600; font-size: 9pt; text-transform: uppercase; }
   .val-num { font-weight: 800; color: var(--secondary); }
   
-  /* Columns */
   .recipe-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
   @media (max-width: 600px) { .recipe-columns { grid-template-columns: 1fr; } }
-  
   .col-title { font-size: 13pt; font-weight: 800; color: var(--secondary); border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
   
   .ing-list { list-style: none; padding: 0; margin: 0; }
@@ -189,7 +159,7 @@
   </div>
 </div>
 
-<!-- האפליקציה עצמה -->
+<!-- האפליקציה -->
 <div class="container" id="app-container">
   <div class="app-header">
     <div class="app-title">
@@ -212,6 +182,7 @@
     </div>
     <div class="category-chips">
       <div class="chip active" onclick="setCategory('all', this)">הכל</div>
+      <div class="chip fav-chip" onclick="setCategory('favorites', this)"><i class="fa-solid fa-heart"></i> מועדפים</div>
       <div class="chip" onclick="setCategory('עיקריות', this)">עיקריות</div>
       <div class="chip" onclick="setCategory('תוספות', this)">תוספות</div>
       <div class="chip" onclick="setCategory('רטבים', this)">רטבים</div>
@@ -228,51 +199,10 @@
 <script>
 let currentUser = null;
 let syncInterval = null;
+let userFavorites = [];
 
-// מתכוני ברירת מחדל + טוטו
 const defaultRecipes = [
-  {
-    id: "patties", title: "קציצות עוף, קינואה וירקות (30 יחידות)", author: "מעין", category: "עיקריות", imageUrl: "", basePortions: 30, primaryName: "חזה עוף טחון", primaryAmount: 1680, primaryUnit: "גרם", isMeat: false,
-    nutrition: { cals: 3000, protein: 435, carbs: 204, fat: 45 },
-    ingredients: [{ name: "חזה עוף טחון", amount: 1680, unit: "גרם" }, { name: "קינואה מבושלת", amount: 290, unit: "גרם" }, { name: "בצל לבן/צהוב", amount: 550, unit: "גרם" }, { name: "כרישה", amount: 380, unit: "גרם" }, { name: "קישוא מגורר וסחוט", amount: 400, unit: "גרם" }, { name: "פטרוזיליה טרייה", amount: 50, unit: "גרם" }, { name: "ביצים (L)", amount: 2, unit: "יחידות" }, { name: "פירורי לחם", amount: 30, unit: "גרם" }],
-    instructions: ["מגררים קישוא דק וסוחטים היטב.", "מערבבים את הכל ולשים היטב.", "אופים ב-200 מעלות כ-20 דקות."]
-  },
-  {
-    id: "rec_chicken_soup_patties", title: "קציצות עוף מבושלות במרק", author: "טוטו", category: "עיקריות", imageUrl: "", basePortions: 12, primaryName: "בשר טחון", primaryAmount: 2000, primaryUnit: "גרם", isMeat: false,
-    nutrition: { cals: 4560, protein: 384, carbs: 336, fat: 168 },
-    ingredients: [{ name: "פרגית טחונה", amount: 1000, unit: "גרם" }, { name: "חזה עוף טחון", amount: 1000, unit: "גרם" }, { name: "עגבניות טחונות", amount: 6, unit: "יחידות" }],
-    instructions: ["מטגנים את הבצל והירקות.", "מוסיפים תבלינים, עגבניות ומים.", "מבשלים את הקציצות ברוטב."]
-  },
-  {
-    id: "rec_fried_beef_patties", title: "קציצות בשר טחון (מטוגנות)", author: "טוטו", category: "עיקריות", imageUrl: "", basePortions: 10, primaryName: "בשר טחון", primaryAmount: 1000, primaryUnit: "גרם", isMeat: true,
-    nutrition: { cals: 3100, protein: 220, carbs: 180, fat: 180 },
-    ingredients: [{ name: "בשר טחון", amount: 1000, unit: "גרם" }, { name: "תפוחי אדמה גדולים", amount: 4, unit: "יחידות" }],
-    instructions: ["טוחנים את תפוחי האדמה וסוחטים.", "לשים את כל החומרים ומקררים.", "מטגנים בשמן עמוק או רדוד."]
-  },
-  {
-    id: "rec_fried_kuba", title: "קובה מטוגנת", author: "טוטו", category: "עיקריות", imageUrl: "", basePortions: 15, primaryName: "חזה עוף (לבצק)", primaryAmount: 500, primaryUnit: "גרם", isMeat: true,
-    nutrition: { cals: 3150, protein: 120, carbs: 360, fat: 135 },
-    ingredients: [{ name: "בשר טחון למילוי", amount: 400, unit: "גרם" }, { name: "חזה עוף לבצק", amount: 500, unit: "גרם" }, { name: "בורגול דק", amount: 400, unit: "גרם" }],
-    instructions: ["מטגנים את המילוי.", "מכינים את הבצק ומשהים.", "ממלאים את הקובות ומטגנים."]
-  },
-  {
-    id: "rec_red_pasta", title: "פסטה ברוטב אדום עשיר", author: "טוטו", category: "עיקריות", imageUrl: "", basePortions: 4, primaryName: "פסטה יבשה", primaryAmount: 400, primaryUnit: "גרם", isMeat: false,
-    nutrition: { cals: 1360, protein: 36, carbs: 192, fat: 48 },
-    ingredients: [{ name: "פסטה יבשה", amount: 400, unit: "גרם" }, { name: "עגבניות מרוסקות", amount: 5, unit: "יחידות" }],
-    instructions: ["מטגנים שום וירקות.", "מוסיפים עגבניות ותבלינים.", "מבשלים ויוצקים על הפסטה."]
-  },
-  {
-    id: "rec_yellow_rice", title: "אורז צהוב", author: "טוטו", category: "תוספות", imageUrl: "", basePortions: 8, primaryName: "אורז", primaryAmount: 4, primaryUnit: "כוסות", isMeat: false,
-    nutrition: { cals: 1920, protein: 32, carbs: 288, fat: 64 },
-    ingredients: [{ name: "אורז", amount: 4, unit: "כוסות" }, { name: "גזר", amount: 2, unit: "יחידות" }, { name: "כורכום", amount: 1, unit: "כפית" }],
-    instructions: ["מטגנים ירקות ותבלינים.", "מוסיפים מים ואורז.", "מבשלים על אש קטנה עד שמוכן."]
-  },
-  {
-    id: "rec_red_rice", title: "אורז אדום", author: "טוטו", category: "תוספות", imageUrl: "", basePortions: 8, primaryName: "אורז", primaryAmount: 4, primaryUnit: "כוסות", isMeat: false,
-    nutrition: { cals: 2040, protein: 40, carbs: 304, fat: 64 },
-    ingredients: [{ name: "אורז", amount: 4, unit: "כוסות" }, { name: "עגבניות", amount: 5, unit: "יחידות" }, { name: "רסק עגבניות", amount: 2, unit: "כפות" }],
-    instructions: ["מטגנים ירקות ותבלינים.", "מוסיפים רסק, מים ואורז.", "מבשלים על אש קטנה."]
-  }
+  { id: "patties", title: "קציצות עוף, קינואה וירקות (30 יחידות)", author: "מעין", category: "עיקריות", imageUrl: "", basePortions: 30, primaryName: "חזה עוף טחון", primaryAmount: 1680, primaryUnit: "גרם", isMeat: false, nutrition: { cals: 3000, protein: 435, carbs: 204, fat: 45 }, ingredients: [{ name: "חזה עוף טחון", amount: 1680, unit: "גרם" }, { name: "ביצים (L)", amount: 2, unit: "יחידות" }], instructions: ["אופים ב-200 מעלות."] }
 ];
 
 let allRecipes = defaultRecipes;
@@ -290,42 +220,33 @@ function escapeHTML(str) {
 async function checkSession() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   if (session) { loginSuccess(session.user); } 
-  else {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app-container').style.display = 'none';
-  }
+  else { document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('app-container').style.display = 'none'; }
 }
 
 async function handleLogin() {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
+  const email = document.getElementById('auth-email').value; const password = document.getElementById('auth-password').value;
   const msgEl = document.getElementById('auth-msg');
   if(!email || password.length < 6) { msgEl.innerText = "נא להזין אימייל וסיסמה (לפחות 6 תווים)."; return; }
   msgEl.innerText = "מתחבר...";
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) { msgEl.innerText = "שגיאה: " + error.message; } 
-  else { msgEl.innerText = ""; loginSuccess(data.user); }
+  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else { msgEl.innerText = ""; loginSuccess(data.user); }
 }
 
 async function handleSignup() {
-  const email = document.getElementById('auth-email').value;
-  const password = document.getElementById('auth-password').value;
+  const email = document.getElementById('auth-email').value; const password = document.getElementById('auth-password').value;
   const msgEl = document.getElementById('auth-msg');
-  if(!email || password.length < 6) { msgEl.innerText = "נא להזין אימייל וסיסמה (לפחות 6 תווים)."; return; }
+  if(!email || password.length < 6) { msgEl.innerText = "נא להזין אימייל וסיסמה."; return; }
   msgEl.innerText = "נרשם...";
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) { msgEl.innerText = "שגיאה: " + error.message; } 
-  else { msgEl.innerText = "נרשמת בהצלחה! מתחבר..."; loginSuccess(data.user); }
+  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else { msgEl.innerText = "נרשמת בהצלחה! מתחבר..."; loginSuccess(data.user); }
 }
 
 async function handleLogout() {
   await supabaseClient.auth.signOut();
-  currentUser = null;
+  currentUser = null; userFavorites = [];
   if(syncInterval) clearInterval(syncInterval);
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app-container').style.display = 'none';
-  document.getElementById('auth-email').value = '';
-  document.getElementById('auth-password').value = '';
+  document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('app-container').style.display = 'none';
+  document.getElementById('auth-email').value = ''; document.getElementById('auth-password').value = '';
 }
 
 function loginSuccess(user) {
@@ -339,23 +260,21 @@ function loginSuccess(user) {
 
 // --- App Logic ---
 function getLocalKey() { return 'my_recipes_db_shared'; }
+function getFavKey() { return 'my_favs_' + currentUser.id; }
 
 function initApp() {
   try {
     const saved = localStorage.getItem(getLocalKey());
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) { allRecipes = parsed; }
-    } else {
-      allRecipes = defaultRecipes;
-    }
-  } catch (e) { console.warn('Local read error:', e); }
+    if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed) && parsed.length > 0) { allRecipes = parsed; } } 
+    else { allRecipes = defaultRecipes; }
+    
+    // שליפת מועדפים מקומיים
+    const savedFavs = localStorage.getItem(getFavKey());
+    if (savedFavs) { userFavorites = JSON.parse(savedFavs); }
+  } catch (e) {}
 
-  if (!activeRecipeId || !allRecipes.some(r => r.id === activeRecipeId)) {
-    activeRecipeId = allRecipes[0]?.id || null;
-  }
-  renderNavList();
-  renderActiveRecipe();
+  if (!activeRecipeId || !allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = allRecipes[0]?.id || null; }
+  renderNavList(); renderActiveRecipe();
 
   if (supabaseClient) {
     setTimeout(() => {
@@ -368,28 +287,33 @@ function initApp() {
 async function fetchCloudAndMerge() {
   if (!supabaseClient || !currentUser) return;
   try {
-    const { data, error } = await supabaseClient
-      .from('recipes')
-      .select('*')
-      .eq('id', 'master_db');
-
-    if (error || !data || data.length === 0) return;
+    // שולף גם את המאגר המשותף וגם את המועדפים של המשתמש בענן
+    const { data, error } = await supabaseClient.from('recipes').select('*').in('id', ['master_db', 'fav_' + currentUser.id]);
+    if (error || !data) return;
     
-    const latestRow = data[data.length - 1];
-    if (!latestRow || !latestRow.data || !Array.isArray(latestRow.data)) return;
-
-    const cloudRecipes = latestRow.data;
-    const localJson = JSON.stringify(allRecipes);
-    const cloudJson = JSON.stringify(cloudRecipes);
-
-    if (cloudJson !== localJson) {
-      allRecipes = cloudRecipes;
-      localStorage.setItem(getLocalKey(), JSON.stringify(allRecipes));
-      if (!allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = allRecipes[0]?.id || null; }
-      renderNavList();
-      renderActiveRecipe();
+    const masterRow = data.find(r => r.id === 'master_db');
+    if (masterRow && masterRow.data && Array.isArray(masterRow.data)) {
+      const cloudJson = JSON.stringify(masterRow.data);
+      const localJson = JSON.stringify(allRecipes);
+      if (cloudJson !== localJson) {
+        allRecipes = masterRow.data;
+        localStorage.setItem(getLocalKey(), JSON.stringify(allRecipes));
+        if (!allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = allRecipes[0]?.id || null; }
+        renderNavList(); renderActiveRecipe();
+      }
     }
-  } catch (err) { console.error("Cloud sync error:", err); }
+    
+    const favRow = data.find(r => r.id === 'fav_' + currentUser.id);
+    if (favRow && favRow.data && Array.isArray(favRow.data)) {
+      const cloudFavJson = JSON.stringify(favRow.data);
+      const localFavJson = JSON.stringify(userFavorites);
+      if (cloudFavJson !== localFavJson) {
+        userFavorites = favRow.data;
+        localStorage.setItem(getFavKey(), JSON.stringify(userFavorites));
+        renderNavList(); renderActiveRecipe();
+      }
+    }
+  } catch (err) {}
 }
 
 async function persistToCloud() {
@@ -397,34 +321,58 @@ async function persistToCloud() {
   try {
     localStorage.setItem(getLocalKey(), JSON.stringify(allRecipes));
     await supabaseClient.from('recipes').upsert({ id: 'master_db', data: allRecipes });
-  } catch (err) { console.warn('Cloud persistence warning:', err); }
+  } catch (err) {}
+}
+
+async function toggleFavorite(id) {
+  if (userFavorites.includes(id)) { userFavorites = userFavorites.filter(f => f !== id); } 
+  else { userFavorites.push(id); }
+  
+  localStorage.setItem(getFavKey(), JSON.stringify(userFavorites));
+  renderNavList(); renderActiveRecipe();
+  
+  if (supabaseClient) {
+    await supabaseClient.from('recipes').upsert({ id: 'fav_' + currentUser.id, data: userFavorites });
+  }
 }
 
 function renderNavList() {
   const navEl = document.getElementById('recipe-list-nav');
   const term = document.getElementById('search-box').value.trim().toLowerCase();
+  
   const filtered = allRecipes.filter(r => {
-    const matchCat = (currentCategory === 'all' || r.category === currentCategory);
+    // 1. סינון מתכונים פרטיים של אחרים
+    if (r.isPrivate && r.ownerId !== currentUser?.id) return false;
+    
+    // 2. סינון קטגוריה / מועדפים
+    let matchCat = false;
+    if (currentCategory === 'all') matchCat = true;
+    else if (currentCategory === 'favorites') matchCat = userFavorites.includes(r.id);
+    else matchCat = (r.category === currentCategory);
+    
+    // 3. סינון חיפוש
     const matchSearch = (!term || r.title.toLowerCase().includes(term) || r.author.toLowerCase().includes(term));
     return matchCat && matchSearch;
   });
-  navEl.innerHTML = filtered.map(r => `
-    <div class="nav-item ${r.id === activeRecipeId ? 'active' : ''}" onclick="selectRecipe('${escapeHTML(r.id)}')">
-      <span class="nav-item-title">${escapeHTML(r.title)}</span>
-      <span class="nav-item-sub"><i class="fa-solid fa-pen-nib" style="margin-left:4px; opacity:0.6;"></i>${escapeHTML(r.author)} &bull; ${r.basePortions} מנות</span>
-    </div>
-  `).join('');
+  
+  navEl.innerHTML = filtered.map(r => {
+    const isFav = userFavorites.includes(r.id);
+    const privateIcon = r.isPrivate ? `<i class="fa-solid fa-lock" style="font-size:8pt; color:#a0aec0;" title="מתכון פרטי"></i> ` : '';
+    const favIcon = isFav ? `<i class="fa-solid fa-heart" style="color:#e53e3e; font-size:8pt;"></i> ` : '';
+    return `
+      <div class="nav-item ${r.id === activeRecipeId ? 'active' : ''}" onclick="selectRecipe('${escapeHTML(r.id)}')">
+        <span class="nav-item-title">${privateIcon}${favIcon}${escapeHTML(r.title)}</span>
+        <span class="nav-item-sub"><i class="fa-solid fa-pen-nib" style="margin-left:4px; opacity:0.6;"></i>${escapeHTML(r.author)} &bull; ${r.basePortions} מנות</span>
+      </div>
+    `;
+  }).join('');
 }
 
 function selectRecipe(id) {
   activeRecipeId = id; currentScale = 1.0;
-  renderNavList(); 
-  renderActiveRecipe();
-  
-  // UX: Mobile Auto-Scroll - גלילה חלקה למתכון כשבוחרים אותו בטלפון
+  renderNavList(); renderActiveRecipe();
   if (window.innerWidth <= 850) {
-    const viewer = document.getElementById('recipe-view');
-    viewer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('recipe-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
@@ -435,36 +383,16 @@ function renderActiveRecipe() {
 
   const scaledPortions = (r.basePortions * currentScale);
   const formattedPortions = (scaledPortions % 1 === 0) ? scaledPortions : scaledPortions.toFixed(1);
+  const isFav = userFavorites.includes(r.id);
+  const isMine = (r.ownerId === currentUser?.id);
 
   let imageHTML = '';
-  if (r.imageUrl && r.imageUrl.trim() !== '') {
-    imageHTML = `<img src="${escapeHTML(r.imageUrl)}" alt="${escapeHTML(r.title)}" class="recipe-cover-img" loading="lazy">`;
-  }
+  if (r.imageUrl && r.imageUrl.trim() !== '') { imageHTML = `<img src="${escapeHTML(r.imageUrl)}" alt="${escapeHTML(r.title)}" class="recipe-cover-img" loading="lazy">`; }
 
   let primaryControl = '';
   if (r.primaryName && r.primaryAmount) {
     const scaledPrimary = Math.round(r.primaryAmount * currentScale);
-    primaryControl = `
-      <div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label>
-        <div class="scaler-input-wrap"><input type="number" value="${scaledPrimary}" step="50" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div>
-      </div>`;
-  }
-
-  let fatControl = '';
-  if (r.isMeat) {
-    fatControl = `
-      <div class="scaler-item">
-        <label>אחוז שומן בבקר:</label>
-        <div class="scaler-input-wrap">
-          <select onchange="changeFat(this.value)">
-            <option value="5" ${beefFatPercent === 5 ? 'selected':''}>5% (רזה)</option>
-            <option value="10" ${beefFatPercent === 10 ? 'selected':''}>10% (דל שומן)</option>
-            <option value="15" ${beefFatPercent === 15 ? 'selected':''}>15% (קלאסי)</option>
-            <option value="20" ${beefFatPercent === 20 ? 'selected':''}>20% (עשיר)</option>
-          </select>
-        </div>
-      </div>
-    `;
+    primaryControl = `<div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label><div class="scaler-input-wrap"><input type="number" value="${scaledPrimary}" step="50" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div></div>`;
   }
 
   const nut = r.nutrition || { cals: 0, protein: 0, carbs: 0, fat: 0 };
@@ -478,12 +406,18 @@ function renderActiveRecipe() {
     ${imageHTML}
     <div class="recipe-meta-header">
       <div>
-        <h2>${escapeHTML(r.title)}</h2>
+        <h2>
+          ${r.isPrivate ? '<i class="fa-solid fa-lock" style="font-size:1.2rem; color:#a0aec0; margin-left:8px;" title="מתכון פרטי"></i>' : ''}
+          ${escapeHTML(r.title)}
+        </h2>
         <span class="author-tag"><i class="fa-solid fa-star"></i> מתכון מאת: ${escapeHTML(r.author)}</span>
       </div>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-red" onclick="deleteRecipe('${escapeHTML(r.id)}')"><i class="fa-solid fa-trash-can"></i> מחק</button>
-        <button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')"><i class="fa-solid fa-pen"></i> ערוך</button>
+        <button class="btn btn-light" onclick="toggleFavorite('${escapeHTML(r.id)}')" style="border-color:${isFav ? '#e53e3e' : 'var(--border)'};">
+          <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" style="color:${isFav ? '#e53e3e' : 'var(--text-light)'}; font-size:1.1rem;"></i>
+        </button>
+        ${isMine ? `<button class="btn btn-red" onclick="deleteRecipe('${escapeHTML(r.id)}')"><i class="fa-solid fa-trash-can"></i></button>
+                    <button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')"><i class="fa-solid fa-pen"></i></button>` : ''}
       </div>
     </div>
     
@@ -494,7 +428,6 @@ function renderActiveRecipe() {
         <div class="scaler-item"><label>מספר מנות:</label>
           <div class="scaler-input-wrap"><input type="number" value="${formattedPortions}" step="0.5" oninput="scaleByPortions(this.value)"><span class="scaler-unit">מנות</span></div>
         </div>
-        ${fatControl}
       </div>
     </div>
     
@@ -521,9 +454,7 @@ function renderActiveRecipe() {
       </div>
       <div>
         <div class="col-title"><i class="fa-solid fa-fire-burner"></i> הוראות הכנה</div>
-        <ol class="inst-list">
-        ${(r.instructions || []).map(item => `<li>${escapeHTML(item)}</li>`).join('')}
-        </ol>
+        <ol class="inst-list">${(r.instructions || []).map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ol>
       </div>
     </div>
   `;
@@ -531,8 +462,6 @@ function renderActiveRecipe() {
 
 function scaleByPortions(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r) { currentScale = num / r.basePortions; renderActiveRecipe(); } }
 function scaleByPrimary(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r && r.primaryAmount) { currentScale = num / r.primaryAmount; renderActiveRecipe(); } }
-function changeFat(val) { beefFatPercent = parseInt(val); renderActiveRecipe(); }
-
 function setCategory(cat, el) { currentCategory = cat; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderNavList(); }
 function filterRecipes() { renderNavList(); }
 
@@ -540,24 +469,22 @@ function openAddModal() {
   document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-plus"></i> הוספת מתכון לספר';
   document.getElementById('m-id').value = '';
   document.getElementById('new-recipe-form').reset();
-  
-  if(currentUser && currentUser.email) {
-    document.getElementById('m-author').value = currentUser.email.split('@')[0];
-  }
-
+  document.getElementById('m-private').checked = false;
+  if(currentUser && currentUser.email) { document.getElementById('m-author').value = currentUser.email.split('@')[0]; }
   document.getElementById('upload-status').style.display = 'none';
   document.getElementById('add-modal').classList.add('open');
 }
 
 function openEditModal(id) {
   const r = allRecipes.find(item => item.id === id);
-  if (!r) return;
+  if (!r || (r.ownerId !== currentUser?.id)) return; // רק הבעלים יכול לערוך
   document.getElementById('modal-heading').innerHTML = `<i class="fa-solid fa-pen"></i> עריכת מתכון: ${escapeHTML(r.title)}`;
   document.getElementById('m-id').value = r.id;
   document.getElementById('m-title').value = r.title || '';
   document.getElementById('m-author').value = r.author || '';
   document.getElementById('m-category').value = r.category || 'עיקריות';
   document.getElementById('m-image-url').value = r.imageUrl || '';
+  document.getElementById('m-private').checked = r.isPrivate || false;
   document.getElementById('m-portions').value = r.basePortions || '';
   document.getElementById('m-prim-name').value = r.primaryName || '';
   document.getElementById('m-prim-qty').value = r.primaryAmount || '';
@@ -565,17 +492,8 @@ function openEditModal(id) {
   document.getElementById('m-protein').value = r.nutrition?.protein ?? '';
   document.getElementById('m-carbs').value = r.nutrition?.carbs ?? '';
   document.getElementById('m-fat').value = r.nutrition?.fat ?? '';
-
-  if (Array.isArray(r.ingredients)) {
-    document.getElementById('m-ingredients').value = r.ingredients.map(ing => {
-      const amt = ing.amount !== undefined && ing.amount !== null ? ing.amount : '';
-      return `${ing.name} | ${amt} | ${ing.unit || ''}`.trim();
-    }).join('\n');
-  } else { document.getElementById('m-ingredients').value = ''; }
-  
-  if (Array.isArray(r.instructions)) { document.getElementById('m-instructions').value = r.instructions.join('\n'); } 
-  else { document.getElementById('m-instructions').value = ''; }
-
+  if (Array.isArray(r.ingredients)) { document.getElementById('m-ingredients').value = r.ingredients.map(ing => `${ing.name} | ${ing.amount !== undefined && ing.amount !== null ? ing.amount : ''} | ${ing.unit || ''}`.trim()).join('\n'); } else { document.getElementById('m-ingredients').value = ''; }
+  if (Array.isArray(r.instructions)) { document.getElementById('m-instructions').value = r.instructions.join('\n'); } else { document.getElementById('m-instructions').value = ''; }
   document.getElementById('add-modal').classList.add('open');
 }
 
@@ -583,20 +501,20 @@ function closeAddModal() { document.getElementById('add-modal').classList.remove
 
 async function handleImageUpload(event) {
   const file = event.target.files[0]; if (!file) return;
-  const statusEl = document.getElementById('upload-status'); statusEl.style.display = 'block'; statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> מעלה תמונה...'; statusEl.style.color = 'var(--secondary)';
+  const statusEl = document.getElementById('upload-status'); statusEl.style.display = 'block'; statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> מעלה...'; statusEl.style.color = 'var(--secondary)';
   const fileExt = file.name.split('.').pop(); const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${fileExt}`;
   try {
     const { data, error } = await supabaseClient.storage.from('recipe-images').upload(fileName, file);
     if (error) throw error;
     const { data: publicUrlData } = supabaseClient.storage.from('recipe-images').getPublicUrl(fileName);
     document.getElementById('m-image-url').value = publicUrlData.publicUrl;
-    statusEl.innerHTML = '<i class="fa-solid fa-check"></i> התמונה הועלתה בהצלחה!'; statusEl.style.color = '#38a169'; setTimeout(() => statusEl.style.display = 'none', 3000);
-  } catch (err) { statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> שגיאה בהעלאה: ' + err.message; statusEl.style.color = '#e53e3e'; }
+    statusEl.innerHTML = '<i class="fa-solid fa-check"></i> הועלה בהצלחה!'; statusEl.style.color = '#38a169'; setTimeout(() => statusEl.style.display = 'none', 3000);
+  } catch (err) { statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> שגיאה'; statusEl.style.color = '#e53e3e'; }
   event.target.value = '';
 }
 
 async function deleteRecipe(id) {
-  if (confirm("האם אתה בטוח שברצונך למחוק את המתכון הזה לצמיתות? פעולה זו אינה הפיכה.")) {
+  if (confirm("למחוק את המתכון הזה לצמיתות? פעולה זו אינה הפיכה.")) {
     allRecipes = allRecipes.filter(r => r.id !== id);
     if (activeRecipeId === id) { activeRecipeId = allRecipes.length > 0 ? allRecipes[0].id : null; }
     await persistToCloud(); renderNavList(); renderActiveRecipe();
@@ -610,26 +528,22 @@ async function saveNewRecipe(e) {
   const author = document.getElementById('m-author').value.trim() || 'משפחת מוטאי סניבר';
   const category = document.getElementById('m-category').value || 'עיקריות';
   const imageUrl = document.getElementById('m-image-url').value.trim();
+  const isPrivate = document.getElementById('m-private').checked;
   const portions = parseFloat(document.getElementById('m-portions').value) || 1;
   const primName = document.getElementById('m-prim-name').value.trim();
   const primQty = parseFloat(document.getElementById('m-prim-qty').value) || null;
-  const nutrition = { 
-    cals: parseFloat(document.getElementById('m-cals').value) || 0, protein: parseFloat(document.getElementById('m-protein').value) || 0,
-    carbs: parseFloat(document.getElementById('m-carbs').value) || 0, fat: parseFloat(document.getElementById('m-fat').value) || 0 
-  };
-  const ingredients = document.getElementById('m-ingredients').value.split('\n').filter(l => l.trim()).map(l => {
-    const parts = l.split('|'); return { name: parts[0]?.trim() || '', amount: parseFloat(parts[1]?.trim()) || parts[1]?.trim() || '', unit: parts[2]?.trim() || '' };
-  });
+  const nutrition = { cals: parseFloat(document.getElementById('m-cals').value) || 0, protein: parseFloat(document.getElementById('m-protein').value) || 0, carbs: parseFloat(document.getElementById('m-carbs').value) || 0, fat: parseFloat(document.getElementById('m-fat').value) || 0 };
+  const ingredients = document.getElementById('m-ingredients').value.split('\n').filter(l => l.trim()).map(l => { const parts = l.split('|'); return { name: parts[0]?.trim() || '', amount: parseFloat(parts[1]?.trim()) || parts[1]?.trim() || '', unit: parts[2]?.trim() || '' }; });
   const instructions = document.getElementById('m-instructions').value.split('\n').filter(l => l.trim());
 
   if (editId) {
     const index = allRecipes.findIndex(item => item.id === editId);
     if (index !== -1) {
-      allRecipes[index] = { ...allRecipes[index], title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, nutrition, ingredients, instructions };
+      allRecipes[index] = { ...allRecipes[index], title, author, category, imageUrl, isPrivate, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, nutrition, ingredients, instructions };
       activeRecipeId = editId;
     }
   } else {
-    const newRecipe = { id: 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now()), title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, primaryUnit: 'גרם', isMeat: false, nutrition, ingredients, instructions };
+    const newRecipe = { id: 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now()), ownerId: currentUser.id, isPrivate, title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, primaryUnit: 'גרם', isMeat: false, nutrition, ingredients, instructions };
     allRecipes.unshift(newRecipe); activeRecipeId = newRecipe.id;
   }
   await persistToCloud(); closeAddModal(); document.getElementById('new-recipe-form').reset(); currentScale = 1.0; renderNavList(); renderActiveRecipe();
@@ -650,12 +564,11 @@ async function importData(event) {
         allRecipes = data; activeRecipeId = allRecipes[0]?.id; currentScale = 1.0;
         await persistToCloud(); renderNavList(); renderActiveRecipe(); alert('ספר המתכונים יובא בהצלחה!');
       }
-    } catch(err) { alert('שגיאה בקריאת הקובץ. ודא שזהו קובץ JSON תקין.'); }
+    } catch(err) { alert('שגיאה בקריאת הקובץ.'); }
   };
   reader.readAsText(file);
 }
 
-// הפעלת בדיקת משתמש בעליית הדף
 if(supabaseClient) { checkSession(); }
 </script>
 
@@ -668,8 +581,15 @@ if(supabaseClient) { checkSession(); }
     </div>
     <form id="new-recipe-form" onsubmit="saveNewRecipe(event)">
       <input type="hidden" id="m-id" value="">
+      
+      <!-- הגדרת פרטיות -->
+      <div class="form-group checkbox-wrap" style="margin-bottom: 20px;">
+        <input type="checkbox" id="m-private">
+        <label for="m-private"><i class="fa-solid fa-lock" style="margin-left: 4px;"></i> מתכון פרטי (יוצג רק לי)</label>
+      </div>
+
       <div class="form-row">
-        <div class="form-group"><label>שם המתכון:</label><input type="text" id="m-title" class="form-control" placeholder="למשל: עראייס ביתי"></div>
+        <div class="form-group"><label>שם המתכון:</label><input type="text" id="m-title" class="form-control" placeholder="למשל: עראייס ביתי" required></div>
         <div class="form-group"><label>מתכון מאת:</label><input type="text" id="m-author" class="form-control" placeholder="שם המחבר"></div>
       </div>
       <div class="form-row">
@@ -692,10 +612,6 @@ if(supabaseClient) { checkSession(); }
       <div class="form-row">
         <div class="form-group"><label>קלוריות:</label><input type="number" id="m-cals" class="form-control" placeholder="0"></div>
         <div class="form-group"><label>חלבון (גרם):</label><input type="number" id="m-protein" class="form-control" placeholder="0" step="0.1"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>פחמימות (גרם):</label><input type="number" id="m-carbs" class="form-control" placeholder="0" step="0.1"></div>
-        <div class="form-group"><label>שומן (גרם):</label><input type="number" id="m-fat" class="form-control" placeholder="0" step="0.1"></div>
       </div>
       <div class="form-group">
         <label>מצרכים (שורה לכל מצרך, בפורמט: שם | כמות | יחידה):</label>
