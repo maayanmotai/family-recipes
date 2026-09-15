@@ -663,6 +663,7 @@ async function processAiImport(btn) {
     });
 
     if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
     if (!data || !data.recipe) throw new Error("תשובה לא תקינה מהשרת.");
 
     const r = data.recipe;

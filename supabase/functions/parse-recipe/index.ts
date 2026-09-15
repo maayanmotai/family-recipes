@@ -55,7 +55,7 @@ The required JSON format is EXACTLY:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        system_instruction: {
+        systemInstruction: {
           parts: [{ text: systemInstruction }]
         },
         contents: [{
@@ -98,7 +98,7 @@ The required JSON format is EXACTLY:
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+      status: 200,
     })
   }
 })
