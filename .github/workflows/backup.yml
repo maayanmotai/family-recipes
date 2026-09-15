@@ -1,0 +1,36 @@
+name: Auto Backup & Supabase Ping
+
+on:
+  schedule:
+    - cron: '0 12 */3 * *' # רץ כל 3 ימים בשעה 12:00
+  workflow_dispatch: # כפתור להפעלה ידנית
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create backups folder
+        run: mkdir -p backups
+
+      - name: Fetch data from Supabase
+        run: |
+          curl -X GET 'https://xtaeopklnjxvvnpqhgyx.supabase.co/rest/v1/recipes?select=*' \
+          -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+          -o backups/backup_$(date +'%Y-%m-%d').json
+
+      - name: Keep only last 5 backups
+        run: |
+          cd backups
+          ls -tp backup_*.json | grep -v '/$' | tail -n +6 | xargs -I {} rm -- {} || true
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add backups/
+          git commit -m "Auto-backup: $(date +'%Y-%m-%d')" || exit 0
+          git push
