@@ -16,6 +16,8 @@
 <!-- Google Fonts & Font Awesome -->
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <style>
   :root { 
@@ -604,12 +606,10 @@ function renderActiveRecipe() {
   let primaryControl = '';
   if (r.primaryName && r.primaryAmount) {
     const scaledPrimary = Math.round(r.primaryAmount * currentScale);
-    primaryControl = `<div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label><div class="scaler-input-wrap"><input type="number" value="${scaledPrimary}" step="50" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div></div>`;
+    primaryControl = `<div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label><div class="scaler-input-wrap"><input type="number" id="scaler-primary-input" value="${scaledPrimary}" step="50" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div></div>`;
   }
 
-  const nut = r.nutrition || { cals: 0, protein: 0, carbs: 0, fat: 0 };
-  let cals = Math.round(nut.cals * currentScale), protein = Math.round(nut.protein * currentScale), carbs = Math.round(nut.carbs * currentScale), fat = Math.round(nut.fat * currentScale);
-  const perCals = scaledPortions > 0 ? Math.round(cals / scaledPortions) : 0, perProtein = scaledPortions > 0 ? (protein / scaledPortions).toFixed(1) : 0, perCarbs = scaledPortions > 0 ? (carbs / scaledPortions).toFixed(1) : 0, perFat = scaledPortions > 0 ? (fat / scaledPortions).toFixed(1) : 0;
+
 
   viewEl.innerHTML = `
     ${imageHTML}
@@ -618,20 +618,20 @@ function renderActiveRecipe() {
         <h2>${r.isPrivate ? '<i class="fa-solid fa-lock" style="font-size:1.2rem; color:#a0aec0; margin-left:8px;" title="מתכון פרטי"></i>' : ''}${escapeHTML(r.title)}</h2>
         <span class="author-tag"><i class="fa-solid fa-star"></i> מאת: ${escapeHTML(r.author)}</span>
       </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-light" onclick="toggleWakeLock(this)" title="מצב בישול (השאר מסך דולק)">
+      <div style="display:flex; gap:4px; flex-wrap:nowrap; margin-top: 8px;">
+        <button class="btn btn-light" style="padding: 8px 10px;" onclick="toggleWakeLock(this)" title="מצב בישול (השאר מסך דולק)">
           <i class="fa-regular fa-lightbulb" style="font-size:1.2rem;"></i>
         </button>
-        <button class="btn btn-light" onclick="window.print()" title="הדפסת מתכון">
+        <button class="btn btn-light" style="padding: 8px 10px;" onclick="window.print()" title="הדפסת מתכון">
           <i class="fa-solid fa-print" style="font-size:1.2rem;"></i>
         </button>
-        <button class="btn btn-light" onclick="shareToWhatsApp()" style="border-color:#25D366; color:#25D366;" title="שתף לווטסאפ">
+        <button class="btn btn-light" style="padding: 8px 10px;" onclick="shareToWhatsApp()" style="border-color:#25D366; color:#25D366;" title="שתף לווטסאפ">
           <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i>
         </button>
-        <button class="btn btn-light" onclick="toggleFavorite('${escapeHTML(r.id)}')" style="border-color:${isFav ? '#e53e3e' : 'var(--border)'}; opacity:${isOffline ? '0.6' : '1'};" title="${isOffline ? 'סימון מועדפים אינו זמין במצב לא מקוון' : 'מועדפים'}">
+        <button class="btn btn-light" style="padding: 8px 10px;" onclick="toggleFavorite('${escapeHTML(r.id)}')" style="border-color:${isFav ? '#e53e3e' : 'var(--border)'}; opacity:${isOffline ? '0.6' : '1'};" title="${isOffline ? 'סימון מועדפים אינו זמין במצב לא מקוון' : 'מועדפים'}">
           <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" style="color:${isFav ? '#e53e3e' : 'var(--text-light)'}; font-size:1.1rem;"></i>
         </button>
-        ${(isMine && !isOffline) ? `<button class="btn btn-red" onclick="deleteRecipe('${escapeHTML(r.id)}')" title="מחיקת מתכון"><i class="fa-solid fa-trash-can"></i></button><button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')" title="עריכת מתכון"><i class="fa-solid fa-pen"></i></button>` : ''}
+        ${(isMine && !isOffline) ? `<button class="btn btn-red" style="padding: 8px 10px;" onclick="deleteRecipe('${escapeHTML(r.id)}')" title="מחיקת מתכון"><i class="fa-solid fa-trash-can"></i></button><button class="btn btn-light" style="padding: 8px 10px;" onclick="openEditModal('${escapeHTML(r.id)}')" title="עריכת מתכון"><i class="fa-solid fa-pen"></i></button>` : ''}
       </div>
     </div>
     <div class="scaler-box">
@@ -641,36 +641,11 @@ function renderActiveRecipe() {
       </div>
       <div class="scaler-grid">
         ${primaryControl}
-        <div class="scaler-item"><label>מספר מנות:</label><div class="scaler-input-wrap"><input type="number" value="${formattedPortions}" step="0.5" oninput="scaleByPortions(this.value)"><span class="scaler-unit">מנות</span></div></div>
+        <div class="scaler-item"><label>מספר מנות:</label><div class="scaler-input-wrap"><input type="number" id="scaler-portions-input" value="${formattedPortions}" step="0.5" oninput="scaleByPortions(this.value)"><span class="scaler-unit">מנות</span></div></div>
       </div>
     </div>
-    <table class="nutrition-table">
-      <thead><tr><th>ערך תזונתי</th><th>סך הכל</th><th>למנה בודדת</th></tr></thead>
-      <tbody>
-        <tr><td><strong>קלוריות</strong></td><td class="val-num">${cals.toLocaleString()} קק"ל</td><td>${perCals} קק"ל</td></tr>
-        <tr><td><strong>חלבון</strong></td><td class="val-num">${protein} גרם</td><td>${perProtein} גרם</td></tr>
-        <tr><td><strong>פחמימות</strong></td><td class="val-num">${carbs} גרם</td><td>${perCarbs} גרם</td></tr>
-        <tr><td><strong>שומן</strong></td><td class="val-num">${fat} גרם</td><td>${perFat} גרם</td></tr>
-      </tbody>
-    </table>
-    <div class="recipe-columns">
-      <div><div class="col-title"><i class="fa-solid fa-basket-shopping"></i> מצרכים מעודכנים</div><ul class="ing-list">
-        ${(r.ingredients || []).map(ing => {
-          const scaled = (typeof ing.amount === 'number') ? (ing.amount * currentScale) : ing.amount;
-          const displayQty = (typeof scaled === 'number') ? (scaled % 1 === 0 ? scaled : scaled.toFixed(1)) : (escapeHTML(String(scaled)) || '');
-          return `<li class="ing-row" onclick="this.classList.toggle('step-checked')" title="סמן כבוצע"><span class="ing-name">${escapeHTML(ing.name)}</span><span class="ing-qty">${displayQty} ${escapeHTML(ing.unit || '')}</span></li>`;
-        }).join('')}
-      </ul>
-      <div class="ai-chef-box">
-        <div class="ai-chef-title"><i class="fa-solid fa-wand-magic-sparkles"></i> חסר מרכיב? שאל את ה-AI</div>
-        <div class="ai-chef-input-wrap">
-          <input type="text" id="ai-chef-q-${r.id}" placeholder="לדוגמה: במה להחליף את הביצה?" onkeydown="if(event.key === 'Enter') askAiAssistant('${escapeHTML(r.id)}')">
-          <button class="btn btn-light" onclick="askAiAssistant('${escapeHTML(r.id)}')"><i class="fa-solid fa-paper-plane"></i></button>
-        </div>
-        <div id="ai-chef-res-${r.id}" class="ai-chef-response" style="display:none;"></div>
-      </div>
-      </div>
-      <div><div class="col-title"><i class="fa-solid fa-fire-burner"></i> הוראות הכנה</div><ol class="inst-list">${(r.instructions || []).map(item => `<li onclick="this.classList.toggle('step-checked')" title="סמן כבוצע">${escapeHTML(item)}</li>`).join('')}</ol></div>
+    <div id="recipe-dynamic-content">
+      ${getDynamicHTML(r, currentScale)}
     </div>
     
     <div class="comments-section">
@@ -690,11 +665,66 @@ function renderActiveRecipe() {
         <button class="btn btn-green" style="background:#4338ca; border:none;" onclick="addComment('${escapeHTML(r.id)}')"><i class="fa-solid fa-paper-plane"></i></button>
       </div>` : `<p style="font-size: 9pt; color: var(--text-light); margin-top: 10px;">לא ניתן להגיב במצב לא מקוון.</p>`}
     </div>
+    </div>
   `;
 }
 
-function scaleByPortions(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r) { currentScale = num / r.basePortions; renderActiveRecipe(); } }
-function scaleByPrimary(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r && r.primaryAmount) { currentScale = num / r.primaryAmount; renderActiveRecipe(); } }
+function getDynamicHTML(r, currentScale) {
+  const scaledPortions = (r.basePortions * currentScale);
+  const nut = r.nutrition || { cals: 0, protein: 0, carbs: 0, fat: 0 };
+  let cals = Math.round(nut.cals * currentScale), protein = Math.round(nut.protein * currentScale), carbs = Math.round(nut.carbs * currentScale), fat = Math.round(nut.fat * currentScale);
+  const perCals = scaledPortions > 0 ? Math.round(cals / scaledPortions) : 0, perProtein = scaledPortions > 0 ? (protein / scaledPortions).toFixed(1) : 0, perCarbs = scaledPortions > 0 ? (carbs / scaledPortions).toFixed(1) : 0, perFat = scaledPortions > 0 ? (fat / scaledPortions).toFixed(1) : 0;
+
+  return `
+    <table class="nutrition-table">
+      <thead><tr><th>ערך תזונתי</th><th>סך הכל</th><th>למנה בודדת</th></tr></thead>
+      <tbody>
+        <tr><td><strong>קלוריות</strong></td><td class="val-num">${cals.toLocaleString()} קק"ל</td><td>${perCals} קק"ל</td></tr>
+        <tr><td><strong>חלבון</strong></td><td class="val-num">${protein} גרם</td><td>${perProtein} גרם</td></tr>
+        <tr><td><strong>פחמימות</strong></td><td class="val-num">${carbs} גרם</td><td>${perCarbs} גרם</td></tr>
+        <tr><td><strong>שומן</strong></td><td class="val-num">${fat} גרם</td><td>${perFat} גרם</td></tr>
+      </tbody>
+    </table>
+    <div class="recipe-columns">
+      <div><div class="col-title"><i class="fa-solid fa-basket-shopping"></i> מצרכים מעודכנים</div><ul class="ing-list">
+        ${(r.ingredients || []).map(ing => {
+          const scaled = (typeof ing.amount === 'number') ? (ing.amount * currentScale) : ing.amount;
+          const displayQty = (typeof scaled === 'number') ? (scaled % 1 === 0 ? scaled : scaled.toFixed(1)) : (escapeHTML(String(scaled)) || '');
+          return \`<li class="ing-row" onclick="this.classList.toggle('step-checked')" title="סמן כבוצע"><span class="ing-name">\${escapeHTML(ing.name)}</span><span class="ing-qty">\${displayQty} \${escapeHTML(ing.unit || '')}</span></li>\`;
+        }).join('')}
+      </ul>
+      <div class="ai-chef-box">
+        <div class="ai-chef-title"><i class="fa-solid fa-wand-magic-sparkles"></i> חסר מרכיב? שאל את ה-AI</div>
+        <div class="ai-chef-input-wrap">
+          <input type="text" id="ai-chef-q-${r.id}" placeholder="לדוגמה: במה להחליף את הביצה?" onkeydown="if(event.key === 'Enter') askAiAssistant('${escapeHTML(r.id)}')">
+          <button class="btn btn-light" onclick="askAiAssistant('${escapeHTML(r.id)}')"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+        <div id="ai-chef-res-${r.id}" class="ai-chef-response" style="display:none;"></div>
+      </div>
+      </div>
+      <div><div class="col-title"><i class="fa-solid fa-fire-burner"></i> הוראות הכנה</div><ol class="inst-list">${(r.instructions || []).map(item => \`<li onclick="this.classList.toggle('step-checked')" title="סמן כבוצע">\${escapeHTML(item)}</li>\`).join('')}</ol></div>
+    </div>
+  `;
+}
+
+function updateDynamicUI(r) {
+  const dynamicDiv = document.getElementById('recipe-dynamic-content');
+  if (dynamicDiv) dynamicDiv.innerHTML = getDynamicHTML(r, currentScale);
+  
+  const portionsInput = document.getElementById('scaler-portions-input');
+  if (portionsInput && document.activeElement !== portionsInput) {
+    const scaledPortions = (r.basePortions * currentScale);
+    portionsInput.value = (scaledPortions % 1 === 0) ? scaledPortions : scaledPortions.toFixed(1);
+  }
+  
+  const primaryInput = document.getElementById('scaler-primary-input');
+  if (primaryInput && document.activeElement !== primaryInput) {
+    primaryInput.value = Math.round(r.primaryAmount * currentScale);
+  }
+}
+
+function scaleByPortions(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r) { currentScale = num / r.basePortions; updateDynamicUI(r); } }
+function scaleByPrimary(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r && r.primaryAmount) { currentScale = num / r.primaryAmount; updateDynamicUI(r); } }
 function setCategory(cat, el) { currentCategory = cat; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderNavList(); }
 function filterRecipes() { renderNavList(); }
 
@@ -805,14 +835,19 @@ function toggleAiBox() {
 function previewAiImage(e) {
   const file = e.target.files[0];
   if (!file) return;
+  openCropModal(file, 'ai');
+  e.target.value = '';
+}
+
+async function processAiBlob(blob) {
   const reader = new FileReader();
   reader.onload = (event) => {
     aiImageData = event.target.result.split(',')[1];
-    aiImageMime = file.type;
+    aiImageMime = 'image/jpeg';
     document.getElementById('ai-image-preview').src = event.target.result;
     document.getElementById('ai-image-preview-container').style.display = 'flex';
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(blob);
 }
 
 function clearAiImage() {
@@ -912,18 +947,61 @@ function openEditModal(id) {
 
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
 
-async function handleImageUpload(event) {
+let currentCropper = null;
+let currentCropTarget = null;
+
+function openCropModal(file, target) {
+  currentCropTarget = target;
+  const url = URL.createObjectURL(file);
+  const imgEl = document.getElementById('crop-image');
+  imgEl.src = url;
+  document.getElementById('crop-modal').classList.add('open');
+  if (currentCropper) currentCropper.destroy();
+  setTimeout(() => {
+    currentCropper = new Cropper(imgEl, {
+      aspectRatio: target === 'cover' ? 16 / 9 : NaN,
+      viewMode: 1,
+      autoCropArea: 1,
+    });
+  }, 100);
+}
+
+function closeCropModal() {
+  document.getElementById('crop-modal').classList.remove('open');
+  if (currentCropper) currentCropper.destroy();
+  currentCropper = null;
+}
+
+function confirmCrop() {
+  if (!currentCropper) return;
+  const canvas = currentCropper.getCroppedCanvas({ maxWidth: 1920, maxHeight: 1920, fillColor: '#fff' });
+  canvas.toBlob(async (blob) => {
+    closeCropModal();
+    if (currentCropTarget === 'cover') {
+       await uploadCoverBlob(blob);
+    } else {
+       await processAiBlob(blob);
+    }
+  }, 'image/jpeg', 0.85);
+}
+
+function handleImageUpload(event) {
   if (isOffline || !navigator.onLine) { alert("העלאת תמונות אינה אפשרית במצב לא מקוון."); return; }
   const file = event.target.files[0]; if (!file) return;
+  openCropModal(file, 'cover');
+  event.target.value = '';
+}
+
+async function uploadCoverBlob(blob) {
   const statusEl = document.getElementById('upload-status'); statusEl.style.display = 'block'; statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> מעלה...'; statusEl.style.color = 'var(--secondary)';
-  const fileExt = file.name.split('.').pop(); const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${fileExt}`;
+  const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.jpg`;
   try {
-    const { data, error } = await supabaseClient.storage.from('recipe-images').upload(fileName, file); if (error) throw error;
+    const { error } = await supabaseClient.storage.from('recipe-images').upload(fileName, blob, { contentType: 'image/jpeg' }); 
+    if (error) throw error;
     const { data: publicUrlData } = supabaseClient.storage.from('recipe-images').getPublicUrl(fileName);
     document.getElementById('m-image-url').value = publicUrlData.publicUrl;
     statusEl.innerHTML = '<i class="fa-solid fa-check"></i> הועלה בהצלחה!'; statusEl.style.color = '#38a169'; setTimeout(() => statusEl.style.display = 'none', 3000);
   } catch (err) { statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> שגיאה'; statusEl.style.color = '#e53e3e'; }
-  event.target.value = '';
 }
 
 async function deleteRecipe(id) {
@@ -988,6 +1066,23 @@ checkSession();
     <h3 id="info-modal-title" style="margin-bottom: 12px; color: var(--text);"></h3>
     <p id="info-modal-text" style="color: var(--text-light); line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; font-size: 1.05rem;"></p>
     <button class="btn btn-green" style="width: 100%; background: #4f46e5; border: none; font-size: 1.1rem; padding: 12px;" onclick="closeInfoModal()">הבנתי, תודה!</button>
+  </div>
+</div>
+
+<!-- Modal: Crop Image -->
+<div class="modal-overlay" id="crop-modal" style="z-index: 10001;">
+  <div class="modal-box" style="width: 90%; max-width: 500px; height: 80vh; display: flex; flex-direction: column;">
+    <div class="modal-header">
+      <h3 style="margin-bottom: 0;"><i class="fa-solid fa-crop-simple"></i> חיתוך תמונה</h3>
+      <button class="close-btn" onclick="closeCropModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div style="flex: 1; min-height: 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+      <img id="crop-image" src="" style="display: block; max-width: 100%;">
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+      <button class="btn btn-light" style="flex:1;" onclick="closeCropModal()">ביטול</button>
+      <button class="btn btn-green" style="flex:1;" onclick="confirmCrop()">אישור</button>
+    </div>
   </div>
 </div>
 
