@@ -130,6 +130,16 @@
   .recipe-viewer { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow-soft); }
   .recipe-cover-img { width: 100%; height: 280px; object-fit: cover; border-radius: 12px; margin-bottom: 24px; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
   
+  /* Comments */
+  .comments-section { margin-top: 40px; padding-top: 24px; border-top: 2px dashed var(--border); }
+  .comments-title { font-weight: 800; font-size: 1.2rem; color: var(--secondary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .comment-bubble { background: #fbfaf9; border: 1px solid #eeebe5; border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+  .comment-meta { font-size: 8.5pt; color: var(--text-light); margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
+  .comment-author { font-weight: 700; color: var(--secondary-light); }
+  .comment-text { font-size: 10pt; color: var(--text); line-height: 1.4; white-space: pre-wrap; }
+  .comment-input-wrap { display: flex; gap: 8px; margin-top: 16px; }
+  .comment-input-wrap textarea { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-family: inherit; font-size: 9.5pt; resize: vertical; min-height: 40px; }
+  
   .recipe-meta-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
   .recipe-meta-header h2 { margin: 0; font-size: 1.6rem; font-weight: 800; color: var(--secondary); line-height: 1.2; display: flex; align-items: center; gap: 8px; }
   .author-tag { display: inline-flex; align-items: center; gap: 6px; background: #f5f2eb; color: var(--secondary-light); padding: 4px 12px; border-radius: 20px; font-size: 9pt; font-weight: 700; margin-top: 8px; }
@@ -612,7 +622,7 @@ function renderActiveRecipe() {
     <div class="scaler-box">
       <div class="scaler-title">
         <i class="fa-solid fa-scale-balanced"></i> חישוב כמויות דינמי:
-        <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:11pt; margin-right:6px;" onclick="alert('איך זה עובד?\\n\\nכאן אפשר לשנות את מספר המנות שרוצים להכין (למשל להכפיל מ-4 ל-8 מנות). ברגע שתשנו, כל הכמויות ברשימת המצרכים וכן הערכים התזונתיים יתעדכנו אוטומטית!\\n\\nבנוסף, אם הוגדר מרכיב ראשי (כמו קמח בבצק), אפשר פשוט להזין כמה קמח יש לכם כרגע בבית, וכל שאר המתכון יתאים את עצמו.')" title="איך עובד חישוב הכמויות?"></i>
+        <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:11pt; margin-right:6px;" onclick="showInfoModal('איך זה עובד?', 'כאן אפשר לשנות את מספר המנות שרוצים להכין (למשל להכפיל מ-4 ל-8 מנות). ברגע שתשנו, כל הכמויות ברשימת המצרכים וכן הערכים התזונתיים יתעדכנו אוטומטית!\n\nבנוסף, אם הוגדר מרכיב ראשי (כמו קמח בבצק), אפשר פשוט להזין כמה קמח יש לכם כרגע בבית, וכל שאר המתכון יתאים את עצמו.')" title="איך עובד חישוב הכמויות?"></i>
       </div>
       <div class="scaler-grid">
         ${primaryControl}
@@ -638,6 +648,24 @@ function renderActiveRecipe() {
       </ul></div>
       <div><div class="col-title"><i class="fa-solid fa-fire-burner"></i> הוראות הכנה</div><ol class="inst-list">${(r.instructions || []).map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ol></div>
     </div>
+    
+    <div class="comments-section">
+      <div class="comments-title"><i class="fa-regular fa-comments"></i> תגובות וחוויות</div>
+      ${(r.comments || []).length === 0 ? '<p style="color: var(--text-light); font-size: 9.5pt;">אין עדיין תגובות. ספרו לנו איך יצא!</p>' : (r.comments || []).map(c => `
+        <div class="comment-bubble">
+          <div class="comment-meta">
+            <span class="comment-author">${escapeHTML(c.author)}</span>
+            <span>${new Date(c.timestamp).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'})}</span>
+          </div>
+          <div class="comment-text">${escapeHTML(c.text)}</div>
+        </div>
+      `).join('')}
+      ${!isOffline ? `
+      <div class="comment-input-wrap">
+        <textarea id="new-comment-text-${r.id}" placeholder="הוסף תגובה..."></textarea>
+        <button class="btn btn-green" style="background:#4338ca; border:none;" onclick="addComment('${escapeHTML(r.id)}')"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>` : `<p style="font-size: 9pt; color: var(--text-light); margin-top: 10px;">לא ניתן להגיב במצב לא מקוון.</p>`}
+    </div>
   `;
 }
 
@@ -646,8 +674,47 @@ function scaleByPrimary(val) { const num = parseFloat(val); const r = allRecipes
 function setCategory(cat, el) { currentCategory = cat; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderNavList(); }
 function filterRecipes() { renderNavList(); }
 
+async function addComment(recipeId) {
+  if (isOffline) { showInfoModal('שגיאה', 'לא ניתן להגיב ללא אינטרנט.'); return; }
+  const textInput = document.getElementById(`new-comment-text-${recipeId}`);
+  if (!textInput) return;
+  const text = textInput.value.trim();
+  if (!text) return;
+  
+  const recipeIndex = allRecipes.findIndex(r => r.id === recipeId);
+  if (recipeIndex === -1) return;
+  
+  const author = (currentUser && currentUser.email) ? currentUser.email.split('@')[0] : 'אורח';
+  const newComment = {
+    id: 'c_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+    author: author,
+    text: text,
+    timestamp: new Date().toISOString()
+  };
+  
+  if (!allRecipes[recipeIndex].comments) {
+    allRecipes[recipeIndex].comments = [];
+  }
+  allRecipes[recipeIndex].comments.push(newComment);
+  allRecipes[recipeIndex].updatedAt = new Date().toISOString();
+  
+  textInput.value = '';
+  renderActiveRecipe();
+  await saveAllRecipesToCloud(true);
+}
+
 let aiImageData = null;
 let aiImageMime = null;
+
+function showInfoModal(title, text) {
+  document.getElementById('info-modal-title').innerText = title;
+  document.getElementById('info-modal-text').innerText = text;
+  document.getElementById('info-modal').classList.add('open');
+}
+
+function closeInfoModal() {
+  document.getElementById('info-modal').classList.remove('open');
+}
 
 function toggleAiBox() {
   const box = document.getElementById('ai-box');
@@ -833,6 +900,16 @@ async function importData(event) {
 checkSession();
 </script>
 
+<!-- Modal: Info / Tooltip -->
+<div class="modal-overlay" id="info-modal" style="z-index: 10000;">
+  <div class="modal-box" style="max-width: 400px; text-align: center; padding: 30px 20px;">
+    <div style="font-size: 2.5rem; color: #4338ca; margin-bottom: 15px;"><i class="fa-solid fa-circle-info"></i></div>
+    <h3 id="info-modal-title" style="margin-bottom: 12px; color: var(--text);"></h3>
+    <p id="info-modal-text" style="color: var(--text-light); line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; font-size: 1.05rem;"></p>
+    <button class="btn btn-green" style="width: 100%; background: #4f46e5; border: none; font-size: 1.1rem; padding: 12px;" onclick="closeInfoModal()">הבנתי, תודה!</button>
+  </div>
+</div>
+
 <!-- Modal: Add/Edit Recipe -->
 <div class="modal-overlay" id="add-modal">
   <div class="modal-box">
@@ -891,11 +968,11 @@ checkSession();
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>מרכיב ראשי לסקלר (אופציונלי): <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:10pt;" onclick="alert('מה זה מרכיב ראשי?\\n\\nאם המתכון מבוסס על מרכיב עיקרי (כמו קמח בבצק, או בשר בתבשיל), רשמו כאן את שמו. זה יאפשר למי שקורא את המתכון לחשב כמויות בקלות לפי כמות המרכיב שיש לו בבית (למשל: יש לי רק 400 גרם קמח, הראה לי כמה משאר המצרכים אני צריך).')" title="מה זה מרכיב ראשי לסקלר?"></i></label>
+          <label>מרכיב ראשי לסקלר (אופציונלי): <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:10pt;" onclick="showInfoModal('מה זה מרכיב ראשי?', 'אם המתכון מבוסס על מרכיב עיקרי (כמו קמח בבצק, או בשר בתבשיל), רשמו כאן את שמו. זה יאפשר למי שקורא את המתכון לחשב כמויות בקלות לפי כמות המרכיב שיש לו בבית (למשל: יש לי רק 400 גרם קמח, הראה לי כמה משאר המצרכים אני צריך).')" title="מה זה מרכיב ראשי לסקלר?"></i></label>
           <input type="text" id="m-prim-name" class="form-control" placeholder="לדוגמה: קמח">
         </div>
         <div class="form-group">
-          <label>כמות במתכון המקורי: <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:10pt;" onclick="alert('כמה גרמים של המרכיב הראשי רשומים במתכון המקורי? לפי זה נחשב את היחס.')" title="כמות המרכיב הראשי במתכון המקורי"></i></label>
+          <label>כמות במתכון המקורי: <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:10pt;" onclick="showInfoModal('כמות במתכון המקורי', 'כמה גרמים של המרכיב הראשי רשומים במתכון המקורי? לפי זה נחשב את היחס.')" title="כמות המרכיב הראשי במתכון המקורי"></i></label>
           <input type="number" id="m-prim-qty" class="form-control" placeholder="לדוגמה: 500">
         </div>
       </div>
