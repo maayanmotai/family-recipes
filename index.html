@@ -167,6 +167,14 @@
   .ing-name { font-weight: 600; }
   .ing-qty { font-weight: 800; color: var(--primary-dark); background: #fdf3f0; padding: 2px 8px; border-radius: 6px; }
   
+  /* AI Chef */
+  .ai-chef-box { margin-top: 20px; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 12px; padding: 12px; }
+  .ai-chef-title { font-weight: 800; color: #6b21a8; font-size: 9.5pt; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .ai-chef-input-wrap { display: flex; gap: 6px; }
+  .ai-chef-input-wrap input { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #d8b4fe; font-size: 9pt; background: #fff; }
+  .ai-chef-input-wrap button { background: #9333ea; color: #fff; border: none; padding: 0 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+  .ai-chef-response { margin-top: 10px; font-size: 9.5pt; color: #4c1d95; background: #f3e8ff; padding: 10px; border-radius: 8px; line-height: 1.5; white-space: pre-wrap; }
+  
   .inst-list { padding-right: 20px; margin: 0; font-size: 10.5pt; color: var(--text); line-height: 1.7; }
   .inst-list li { margin-bottom: 12px; padding-right: 6px; }
   .inst-list li::marker { font-weight: 800; color: var(--primary); }
@@ -645,7 +653,16 @@ function renderActiveRecipe() {
           const displayQty = (typeof scaled === 'number') ? (scaled % 1 === 0 ? scaled : scaled.toFixed(1)) : (escapeHTML(String(scaled)) || '');
           return `<li class="ing-row"><span class="ing-name">${escapeHTML(ing.name)}</span><span class="ing-qty">${displayQty} ${escapeHTML(ing.unit || '')}</span></li>`;
         }).join('')}
-      </ul></div>
+      </ul>
+      <div class="ai-chef-box">
+        <div class="ai-chef-title"><i class="fa-solid fa-wand-magic-sparkles"></i> חסר מרכיב? שאל את ה-AI</div>
+        <div class="ai-chef-input-wrap">
+          <input type="text" id="ai-chef-q-${r.id}" placeholder="לדוגמה: במה להחליף את הביצה?" onkeydown="if(event.key === 'Enter') askAiAssistant('${escapeHTML(r.id)}')">
+          <button class="btn btn-light" onclick="askAiAssistant('${escapeHTML(r.id)}')"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+        <div id="ai-chef-res-${r.id}" class="ai-chef-response" style="display:none;"></div>
+      </div>
+      </div>
       <div><div class="col-title"><i class="fa-solid fa-fire-burner"></i> הוראות הכנה</div><ol class="inst-list">${(r.instructions || []).map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ol></div>
     </div>
     
@@ -701,6 +718,38 @@ async function addComment(recipeId) {
   textInput.value = '';
   renderActiveRecipe();
   await persistToCloud();
+}
+
+async function askAiAssistant(recipeId) {
+  if (isOffline || !navigator.onLine) { showInfoModal('שגיאה', 'העוזר החכם דורש חיבור לאינטרנט.'); return; }
+  const inputEl = document.getElementById(`ai-chef-q-${recipeId}`);
+  const resEl = document.getElementById(`ai-chef-res-${recipeId}`);
+  const question = inputEl.value.trim();
+  if (!question) return;
+
+  const recipe = allRecipes.find(r => r.id === recipeId);
+  if (!recipe) return;
+
+  resEl.style.display = 'block';
+  resEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> העוזר חושב על תשובה...';
+  
+  try {
+    const { data, error } = await supabaseClient.functions.invoke('ask-recipe-ai', {
+      body: { recipe, question }
+    });
+    
+    if (error || (data && data.error)) {
+      resEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i> שגיאה בתקשורת עם ה-AI. נסה שוב.';
+      console.error(error || data?.error);
+    } else {
+      const ans = data?.answer || "לא התקבלה תשובה.";
+      resEl.innerHTML = `<strong>תשובה:</strong><br>${escapeHTML(ans).replace(/\n/g, '<br>')}`;
+      inputEl.value = '';
+    }
+  } catch (err) {
+    resEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i> אירעה שגיאה. נסה שוב.';
+    console.error(err);
+  }
 }
 
 let aiImageData = null;
