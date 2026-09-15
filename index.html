@@ -48,6 +48,28 @@
   #app-container { display: none; }
   .container { max-width: 1050px; margin: 0 auto; }
   
+  /* Offline Banner */
+  .offline-banner { 
+    display: none; 
+    background: #fff8e6; 
+    color: #92400e; 
+    border: 1px solid #fde68a; 
+    border-radius: 14px; 
+    padding: 12px 20px; 
+    margin-bottom: 16px; 
+    font-size: 10.5pt; 
+    font-weight: 700; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 10px; 
+    box-shadow: var(--shadow-soft); 
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  .offline-banner.visible { display: flex; }
+  .offline-banner i { font-size: 1.2rem; color: #d97706; }
+  .badge-offline { font-size: 0.75em; background: #fef3c7; color: #92400e; padding: 3px 9px; border-radius: 12px; margin-right: 6px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  
   .app-header { background: var(--secondary); color: #fff; padding: 20px 24px; border-radius: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; box-shadow: var(--shadow-soft); }
   .app-title h1 { margin: 0; font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
   .app-title p { margin: 4px 0 0 0; font-size: 10pt; opacity: 0.85; font-weight: 400; }
@@ -182,13 +204,17 @@
 
 <!-- האפליקציה -->
 <div class="container" id="app-container">
+  <div id="offline-banner" class="offline-banner">
+    <i class="fa-solid fa-cloud-slash"></i>
+    <span>מצב לא מקוון — ספר המתכונים מוצג מהזיכרון המקומי (קריאה בלבד)</span>
+  </div>
   <div class="app-header">
     <div class="app-title">
       <h1>ספר המתכונים הגדול של משפחת מוטאי סניבר</h1>
       <p id="user-display"><i class="fa-regular fa-user" style="margin-left:5px;"></i> מחובר כ-</p>
     </div>
     <div class="app-actions">
-      <button class="btn btn-green" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> הוסף מתכון</button>
+      <button id="btn-add-recipe" class="btn btn-green" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> הוסף מתכון</button>
       <button id="btn-export" class="btn btn-light" onclick="exportData()" style="display:none;"><i class="fa-solid fa-download"></i> גיבוי</button>
       <button id="btn-import" class="btn btn-light" onclick="document.getElementById('import-file').click()" style="display:none;"><i class="fa-solid fa-upload"></i> שחזור</button>
       <button class="btn btn-logout" onclick="handleLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> התנתק</button>
@@ -221,6 +247,7 @@
 let currentUser = null;
 let syncInterval = null;
 let userFavorites = [];
+let isOffline = !navigator.onLine;
 
 // ==============================================
 // 🌟 הגדרות מנהל המערכת (MASTER) 🌟
@@ -242,13 +269,93 @@ function escapeHTML(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
-async function checkSession() {
-  if (!supabaseClient) {
-    document.getElementById('auth-msg').innerText = "שגיאת התחברות לשרת. בדוק את החיבור לאינטרנט."; return;
+function updateNetworkUI() {
+  isOffline = !navigator.onLine;
+  const banner = document.getElementById('offline-banner');
+  if (banner) {
+    if (isOffline) {
+      banner.classList.add('visible');
+    } else {
+      banner.classList.remove('visible');
+    }
   }
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) { loginSuccess(session.user); } 
-  else { document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('app-container').style.display = 'none'; }
+  const addBtn = document.getElementById('btn-add-recipe');
+  if (addBtn) {
+    addBtn.style.display = isOffline ? 'none' : 'inline-flex';
+  }
+  renderUserDisplay();
+  renderActiveRecipe();
+}
+
+window.addEventListener('online', () => {
+  isOffline = false;
+  updateNetworkUI();
+  if (currentUser && supabaseClient) {
+    fetchCloudAndMerge();
+  }
+});
+
+window.addEventListener('offline', () => {
+  isOffline = true;
+  updateNetworkUI();
+});
+
+async function checkSession() {
+  isOffline = !navigator.onLine;
+
+  // 1. If offline, try to restore from localStorage immediately
+  if (isOffline) {
+    const cachedProfile = localStorage.getItem('cached_user_profile');
+    if (cachedProfile) {
+      try {
+        loginSuccess(JSON.parse(cachedProfile));
+        return;
+      } catch (e) {}
+    }
+    const savedRecipes = localStorage.getItem(getLocalKey());
+    if (savedRecipes) {
+      loginSuccess({ email: 'משתמש לא מקוון', id: 'offline_user' });
+      return;
+    }
+    document.getElementById('auth-msg').innerText = "אין חיבור לאינטרנט. נדרש חיבור ראשוני להתחברות.";
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+    return;
+  }
+
+  // 2. If online but supabaseClient failed to load
+  if (!supabaseClient) {
+    const cachedProfile = localStorage.getItem('cached_user_profile');
+    if (cachedProfile) {
+      try {
+        loginSuccess(JSON.parse(cachedProfile));
+        return;
+      } catch (e) {}
+    }
+    document.getElementById('auth-msg').innerText = "שגיאת התחברות לשרת. בדוק את החיבור לאינטרנט.";
+    return;
+  }
+
+  // 3. Online with Supabase
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+      loginSuccess(session.user);
+    } else {
+      document.getElementById('auth-screen').style.display = 'flex';
+      document.getElementById('app-container').style.display = 'none';
+    }
+  } catch (err) {
+    const cachedProfile = localStorage.getItem('cached_user_profile');
+    if (cachedProfile) {
+      try {
+        loginSuccess(JSON.parse(cachedProfile));
+        return;
+      } catch (e) {}
+    }
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app-container').style.display = 'none';
+  }
 }
 
 async function handleLogin() {
@@ -270,31 +377,46 @@ async function handleSignup() {
 }
 
 async function handleLogout() {
-  await supabaseClient.auth.signOut();
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
+  }
   currentUser = null; userFavorites = [];
   if(syncInterval) clearInterval(syncInterval);
+  try { localStorage.removeItem('cached_user_profile'); } catch(e) {}
   document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('app-container').style.display = 'none';
   document.getElementById('auth-email').value = ''; document.getElementById('auth-password').value = '';
 }
 
+function renderUserDisplay() {
+  const userDisplayEl = document.getElementById('user-display');
+  if (!currentUser || !userDisplayEl) return;
+  const username = (currentUser.email && currentUser.email.includes('@')) ? currentUser.email.split('@')[0] : (currentUser.email || 'אורח');
+  const masterBadge = isMaster() ? `<span style="font-size:0.75em; background:#e2e8f0; color:#4a5568; padding:2px 8px; border-radius:12px; margin-right:6px; font-weight:700;">מנהל</span>` : '';
+  const offlineBadge = isOffline ? `<span class="badge-offline"><i class="fa-solid fa-cloud-slash"></i> אופליין (קריאה בלבד)</span>` : '';
+  userDisplayEl.innerHTML = `<i class="fa-regular fa-user" style="margin-left:5px;"></i> מחובר כ: <strong>${escapeHTML(username)}</strong> ${masterBadge} ${offlineBadge}`;
+
+  const expBtn = document.getElementById('btn-export');
+  const impBtn = document.getElementById('btn-import');
+  if (expBtn) expBtn.style.display = isMaster() ? 'inline-flex' : 'none';
+  if (impBtn) impBtn.style.display = (isMaster() && !isOffline) ? 'inline-flex' : 'none';
+}
+
 function loginSuccess(user) {
   currentUser = user;
+  try {
+    if (user && user.email) {
+      localStorage.setItem('cached_user_profile', JSON.stringify({ email: user.email, id: user.id }));
+    }
+  } catch (e) {}
+
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app-container').style.display = 'block';
-  const username = user.email.split('@')[0];
-  
-  if (isMaster()) {
-    document.getElementById('user-display').innerHTML = `<i class="fa-regular fa-user" style="margin-left:5px;"></i> מחובר כ: <strong>${username}</strong> <span style="font-size:0.75em; background:#e2e8f0; color:#4a5568; padding:2px 8px; border-radius:12px; margin-right:6px; font-weight:700;">מנהל</span>`;
-    document.getElementById('btn-export').style.display = 'inline-flex'; document.getElementById('btn-import').style.display = 'inline-flex';
-  } else {
-    document.getElementById('user-display').innerHTML = `<i class="fa-regular fa-user" style="margin-left:5px;"></i> מחובר כ: <strong>${username}</strong>`;
-    document.getElementById('btn-export').style.display = 'none'; document.getElementById('btn-import').style.display = 'none';
-  }
+  renderUserDisplay();
   initApp();
 }
 
 function getLocalKey() { return 'my_recipes_db_shared'; }
-function getFavKey() { return 'my_favs_' + currentUser.id; }
+function getFavKey() { return 'my_favs_' + (currentUser ? currentUser.id : 'guest'); }
 
 function initApp() {
   try {
@@ -306,13 +428,22 @@ function initApp() {
 
   if (!activeRecipeId || !allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = allRecipes[0]?.id || null; }
   renderNavList(); renderActiveRecipe();
+  updateNetworkUI();
 
-  if (supabaseClient) {
-    setTimeout(() => { fetchCloudAndMerge(); syncInterval = setInterval(fetchCloudAndMerge, 10000); }, 2000);
+  if (supabaseClient && navigator.onLine) {
+    // Immediate fetch when online to prevent stale data!
+    fetchCloudAndMerge();
+    if (syncInterval) clearInterval(syncInterval);
+    syncInterval = setInterval(() => {
+      if (navigator.onLine) {
+        fetchCloudAndMerge();
+      }
+    }, 10000);
   }
 }
 
 async function fetchCloudAndMerge() {
+  if (!navigator.onLine) return;
   if (!supabaseClient || !currentUser) return;
   try {
     const { data, error } = await supabaseClient.from('recipes').select('*').in('id', ['master_db', 'fav_' + currentUser.id]);
@@ -338,11 +469,19 @@ async function fetchCloudAndMerge() {
 }
 
 async function persistToCloud() {
+  if (isOffline || !navigator.onLine) {
+    alert("לא ניתן לשמור שינויים במצב לא מקוון (קריאה בלבד).");
+    return;
+  }
   if (!supabaseClient || !currentUser) return;
   try { localStorage.setItem(getLocalKey(), JSON.stringify(allRecipes)); await supabaseClient.from('recipes').upsert({ id: 'master_db', data: allRecipes }); } catch (err) {}
 }
 
 async function toggleFavorite(id) {
+  if (isOffline || !navigator.onLine) {
+    alert("שינוי מועדפים אינו זמין במצב לא מקוון (קריאה בלבד).");
+    return;
+  }
   if (userFavorites.includes(id)) { userFavorites = userFavorites.filter(f => f !== id); } else { userFavorites.push(id); }
   localStorage.setItem(getFavKey(), JSON.stringify(userFavorites));
   renderNavList(); renderActiveRecipe();
@@ -432,10 +571,10 @@ function renderActiveRecipe() {
         <button class="btn btn-light" onclick="shareToWhatsApp()" style="border-color:#25D366; color:#25D366;" title="שתף לווטסאפ">
           <i class="fa-brands fa-whatsapp" style="font-size:1.2rem;"></i>
         </button>
-        <button class="btn btn-light" onclick="toggleFavorite('${escapeHTML(r.id)}')" style="border-color:${isFav ? '#e53e3e' : 'var(--border)'};" title="מועדפים">
+        <button class="btn btn-light" onclick="toggleFavorite('${escapeHTML(r.id)}')" style="border-color:${isFav ? '#e53e3e' : 'var(--border)'}; opacity:${isOffline ? '0.6' : '1'};" title="${isOffline ? 'סימון מועדפים אינו זמין במצב לא מקוון' : 'מועדפים'}">
           <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" style="color:${isFav ? '#e53e3e' : 'var(--text-light)'}; font-size:1.1rem;"></i>
         </button>
-        ${isMine ? `<button class="btn btn-red" onclick="deleteRecipe('${escapeHTML(r.id)}')"><i class="fa-solid fa-trash-can"></i></button><button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')"><i class="fa-solid fa-pen"></i></button>` : ''}
+        ${(isMine && !isOffline) ? `<button class="btn btn-red" onclick="deleteRecipe('${escapeHTML(r.id)}')" title="מחיקת מתכון"><i class="fa-solid fa-trash-can"></i></button><button class="btn btn-light" onclick="openEditModal('${escapeHTML(r.id)}')" title="עריכת מתכון"><i class="fa-solid fa-pen"></i></button>` : ''}
       </div>
     </div>
     <div class="scaler-box">
@@ -473,6 +612,7 @@ function setCategory(cat, el) { currentCategory = cat; document.querySelectorAll
 function filterRecipes() { renderNavList(); }
 
 function openAddModal() {
+  if (isOffline || !navigator.onLine) { alert("הוספת מתכון אינה אפשרית במצב לא מקוון (קריאה בלבד)."); return; }
   document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-plus"></i> הוספת מתכון לספר'; document.getElementById('m-id').value = '';
   document.getElementById('new-recipe-form').reset(); document.getElementById('m-private').checked = false;
   if(currentUser && currentUser.email) { document.getElementById('m-author').value = currentUser.email.split('@')[0]; }
@@ -480,6 +620,7 @@ function openAddModal() {
 }
 
 function openEditModal(id) {
+  if (isOffline || !navigator.onLine) { alert("עריכת מתכון אינה אפשרית במצב לא מקוון (קריאה בלבד)."); return; }
   const r = allRecipes.find(item => item.id === id);
   if (!r || (r.ownerId && r.ownerId !== currentUser?.id && !isMaster())) return; 
   document.getElementById('modal-heading').innerHTML = `<i class="fa-solid fa-pen"></i> עריכת מתכון: ${escapeHTML(r.title)}`;
@@ -495,6 +636,7 @@ function openEditModal(id) {
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
 
 async function handleImageUpload(event) {
+  if (isOffline || !navigator.onLine) { alert("העלאת תמונות אינה אפשרית במצב לא מקוון."); return; }
   const file = event.target.files[0]; if (!file) return;
   const statusEl = document.getElementById('upload-status'); statusEl.style.display = 'block'; statusEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> מעלה...'; statusEl.style.color = 'var(--secondary)';
   const fileExt = file.name.split('.').pop(); const fileName = `img_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${fileExt}`;
@@ -508,6 +650,7 @@ async function handleImageUpload(event) {
 }
 
 async function deleteRecipe(id) {
+  if (isOffline || !navigator.onLine) { alert("מחיקת מתכון אינה אפשרית במצב לא מקוון (קריאה בלבד)."); return; }
   if (confirm("למחוק את המתכון הזה לצמיתות?")) {
     allRecipes = allRecipes.filter(r => r.id !== id);
     if (activeRecipeId === id) { activeRecipeId = allRecipes.length > 0 ? allRecipes[0].id : null; }
@@ -517,6 +660,7 @@ async function deleteRecipe(id) {
 
 async function saveNewRecipe(e) {
   e.preventDefault();
+  if (isOffline || !navigator.onLine) { alert("לא ניתן לשמור שינויים במצב לא מקוון (קריאה בלבד)."); return; }
   const editId = document.getElementById('m-id').value, title = document.getElementById('m-title').value.trim() || 'מתכון ללא שם', author = document.getElementById('m-author').value.trim() || 'משפחת מוטאי סניבר', category = document.getElementById('m-category').value || 'עיקריות', imageUrl = document.getElementById('m-image-url').value.trim(), isPrivate = document.getElementById('m-private').checked, portions = parseFloat(document.getElementById('m-portions').value) || 1, primName = document.getElementById('m-prim-name').value.trim(), primQty = parseFloat(document.getElementById('m-prim-qty').value) || null;
   const nutrition = { cals: parseFloat(document.getElementById('m-cals').value) || 0, protein: parseFloat(document.getElementById('m-protein').value) || 0, carbs: parseFloat(document.getElementById('m-carbs').value) || 0, fat: parseFloat(document.getElementById('m-fat').value) || 0 };
   const ingredients = document.getElementById('m-ingredients').value.split('\n').filter(l => l.trim()).map(l => { const parts = l.split('|'); return { name: parts[0]?.trim() || '', amount: parseFloat(parts[1]?.trim()) || parts[1]?.trim() || '', unit: parts[2]?.trim() || '' }; });
@@ -542,6 +686,7 @@ function exportData() {
 }
 
 async function importData(event) {
+  if (isOffline || !navigator.onLine) { alert("שחזור נתונים אינו זמין במצב לא מקוון."); event.target.value = ''; return; }
   const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = async function(e) {
@@ -556,7 +701,7 @@ async function importData(event) {
   reader.readAsText(file);
 }
 
-if(supabaseClient) { checkSession(); }
+checkSession();
 </script>
 
 <!-- Modal: Add/Edit Recipe -->
@@ -615,7 +760,15 @@ if(supabaseClient) { checkSession(); }
 </div>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then((registration) => {
+        if (navigator.onLine) {
+          registration.update();
+        }
+      }).catch((err) => {
+        console.warn('SW registration failed:', err);
+      });
+    });
   }
 </script>
 </body>
