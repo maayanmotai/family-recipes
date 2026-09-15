@@ -622,7 +622,7 @@ function renderActiveRecipe() {
     <div class="scaler-box">
       <div class="scaler-title">
         <i class="fa-solid fa-scale-balanced"></i> חישוב כמויות דינמי:
-        <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:11pt; margin-right:6px;" onclick="showInfoModal('איך זה עובד?', 'כאן אפשר לשנות את מספר המנות שרוצים להכין (למשל להכפיל מ-4 ל-8 מנות). ברגע שתשנו, כל הכמויות ברשימת המצרכים וכן הערכים התזונתיים יתעדכנו אוטומטית!\n\nבנוסף, אם הוגדר מרכיב ראשי (כמו קמח בבצק), אפשר פשוט להזין כמה קמח יש לכם כרגע בבית, וכל שאר המתכון יתאים את עצמו.')" title="איך עובד חישוב הכמויות?"></i>
+        <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:11pt; margin-right:6px;" onclick="showInfoModal('איך זה עובד?', 'כאן אפשר לשנות את מספר המנות שרוצים להכין (למשל להכפיל מ-4 ל-8 מנות). ברגע שתשנו, כל הכמויות ברשימת המצרכים וכן הערכים התזונתיים יתעדכנו אוטומטית!\\\\n\\\\nבנוסף, אם הוגדר מרכיב ראשי (כמו קמח בבצק), אפשר פשוט להזין כמה קמח יש לכם כרגע בבית, וכל שאר המתכון יתאים את עצמו.')" title="איך עובד חישוב הכמויות?"></i>
       </div>
       <div class="scaler-grid">
         ${primaryControl}
@@ -700,7 +700,7 @@ async function addComment(recipeId) {
   
   textInput.value = '';
   renderActiveRecipe();
-  await saveAllRecipesToCloud(true);
+  await persistToCloud();
 }
 
 let aiImageData = null;
