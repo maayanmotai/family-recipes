@@ -193,7 +193,7 @@
     <div class="app-actions">
       <button class="btn btn-green" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> הוסף מתכון</button>
       
-      <!-- כפתורי הגיבוי והשחזור יוסתרו כברירת מחדל, ויוצגו רק למנהל -->
+      <!-- כפתורי הגיבוי והשחזור -->
       <button id="btn-export" class="btn btn-light" onclick="exportData()" style="display:none;"><i class="fa-solid fa-download"></i> גיבוי</button>
       <button id="btn-import" class="btn btn-light" onclick="document.getElementById('import-file').click()" style="display:none;"><i class="fa-solid fa-upload"></i> שחזור</button>
       
@@ -234,7 +234,9 @@ const MASTER_EMAILS = ['maayan.motai@gmail.com'];
 // ==============================================
 
 function isMaster() {
-  return currentUser && MASTER_EMAILS.includes(currentUser.email);
+  if (!currentUser || !currentUser.email) return false;
+  const myEmail = currentUser.email.toLowerCase();
+  return MASTER_EMAILS.some(e => e.toLowerCase() === myEmail);
 }
 
 const defaultRecipes = [
@@ -519,9 +521,10 @@ function renderActiveRecipe() {
         <div class="col-title"><i class="fa-solid fa-basket-shopping"></i> מצרכים מעודכנים</div>
         <ul class="ing-list">
         ${(r.ingredients || []).map(ing => {
+          if (!ing) return '';
           const scaled = (typeof ing.amount === 'number') ? (ing.amount * currentScale) : ing.amount;
-          const displayQty = (typeof scaled === 'number') ? (scaled % 1 === 0 ? scaled : scaled.toFixed(1)) : (escapeHTML(String(scaled)) || '');
-          return `<li class="ing-row"><span class="ing-name">${escapeHTML(ing.name)}</span><span class="ing-qty">${displayQty} ${escapeHTML(ing.unit || '')}</span></li>`;
+          const displayQty = (typeof scaled === 'number') ? (scaled % 1 === 0 ? scaled : scaled.toFixed(1)) : (escapeHTML(String(scaled || '')) || '');
+          return `<li class="ing-row"><span class="ing-name">${escapeHTML(ing.name || '')}</span><span class="ing-qty">${displayQty} ${escapeHTML(ing.unit || '')}</span></li>`;
         }).join('')}
         </ul>
       </div>
@@ -533,42 +536,72 @@ function renderActiveRecipe() {
   `;
 }
 
-function scaleByPortions(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r) { currentScale = num / r.basePortions; renderActiveRecipe(); } }
-function scaleByPrimary(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r && r.primaryAmount) { currentScale = num / r.primaryAmount; renderActiveRecipe(); } }
-function setCategory(cat, el) { currentCategory = cat; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderNavList(); }
-function filterRecipes() { renderNavList(); }
-
 function openAddModal() {
-  document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-plus"></i> הוספת מתכון לספר';
-  document.getElementById('m-id').value = '';
-  document.getElementById('new-recipe-form').reset();
-  document.getElementById('m-private').checked = false;
-  if(currentUser && currentUser.email) { document.getElementById('m-author').value = currentUser.email.split('@')[0]; }
-  document.getElementById('upload-status').style.display = 'none';
-  document.getElementById('add-modal').classList.add('open');
+  try {
+    document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-plus"></i> הוספת מתכון לספר';
+    document.getElementById('m-id').value = '';
+    document.getElementById('new-recipe-form').reset();
+    document.getElementById('m-private').checked = false;
+    if(currentUser && currentUser.email) { document.getElementById('m-author').value = currentUser.email.split('@')[0]; }
+    document.getElementById('upload-status').style.display = 'none';
+    document.getElementById('add-modal').classList.add('open');
+  } catch (err) {
+    alert("שגיאה בפתיחת החלון: " + err.message);
+  }
 }
 
 function openEditModal(id) {
-  const r = allRecipes.find(item => item.id === id);
-  if (!r || (r.ownerId && r.ownerId !== currentUser?.id && !isMaster())) return; 
-  
-  document.getElementById('modal-heading').innerHTML = `<i class="fa-solid fa-pen"></i> עריכת מתכון: ${escapeHTML(r.title)}`;
-  document.getElementById('m-id').value = r.id;
-  document.getElementById('m-title').value = r.title || '';
-  document.getElementById('m-author').value = r.author || '';
-  document.getElementById('m-category').value = r.category || 'עיקריות';
-  document.getElementById('m-image-url').value = r.imageUrl || '';
-  document.getElementById('m-private').checked = r.isPrivate || false;
-  document.getElementById('m-portions').value = r.basePortions || '';
-  document.getElementById('m-prim-name').value = r.primaryName || '';
-  document.getElementById('m-prim-qty').value = r.primaryAmount || '';
-  document.getElementById('m-cals').value = r.nutrition?.cals ?? '';
-  document.getElementById('m-protein').value = r.nutrition?.protein ?? '';
-  document.getElementById('m-carbs').value = r.nutrition?.carbs ?? '';
-  document.getElementById('m-fat').value = r.nutrition?.fat ?? '';
-  if (Array.isArray(r.ingredients)) { document.getElementById('m-ingredients').value = r.ingredients.map(ing => `${ing.name} | ${ing.amount !== undefined && ing.amount !== null ? ing.amount : ''} | ${ing.unit || ''}`.trim()).join('\n'); } else { document.getElementById('m-ingredients').value = ''; }
-  if (Array.isArray(r.instructions)) { document.getElementById('m-instructions').value = r.instructions.join('\n'); } else { document.getElementById('m-instructions').value = ''; }
-  document.getElementById('add-modal').classList.add('open');
+  try {
+    // מצאנו את המתכון (משתמשים ב-String כדי למנוע בעיות של מספר מול טקסט)
+    const r = allRecipes.find(item => String(item.id) === String(id));
+    if (!r) {
+      alert("תקלה: לא הצלחנו למצוא את המתכון הזה בזיכרון.");
+      return; 
+    }
+    
+    if (r.ownerId && r.ownerId !== currentUser?.id && !isMaster()) {
+      alert("אין לך הרשאה לערוך את המתכון הזה.");
+      return; 
+    }
+    
+    document.getElementById('modal-heading').innerHTML = `<i class="fa-solid fa-pen"></i> עריכת מתכון: ${escapeHTML(r.title)}`;
+    document.getElementById('m-id').value = r.id;
+    document.getElementById('m-title').value = r.title || '';
+    document.getElementById('m-author').value = r.author || '';
+    document.getElementById('m-category').value = r.category || 'עיקריות';
+    document.getElementById('m-image-url').value = r.imageUrl || '';
+    document.getElementById('m-private').checked = r.isPrivate || false;
+    document.getElementById('m-portions').value = r.basePortions || '';
+    document.getElementById('m-prim-name').value = r.primaryName || '';
+    document.getElementById('m-prim-qty').value = r.primaryAmount || '';
+    document.getElementById('m-cals').value = r.nutrition?.cals ?? '';
+    document.getElementById('m-protein').value = r.nutrition?.protein ?? '';
+    document.getElementById('m-carbs').value = r.nutrition?.carbs ?? '';
+    document.getElementById('m-fat').value = r.nutrition?.fat ?? '';
+    
+    // מילוי מצרכים בזהירות
+    if (Array.isArray(r.ingredients)) { 
+      document.getElementById('m-ingredients').value = r.ingredients.map(ing => {
+        if (!ing) return '';
+        return `${ing.name || ''} | ${ing.amount !== undefined && ing.amount !== null ? ing.amount : ''} | ${ing.unit || ''}`.trim();
+      }).join('\n'); 
+    } else { 
+      document.getElementById('m-ingredients').value = ''; 
+    }
+    
+    // מילוי הוראות
+    if (Array.isArray(r.instructions)) { 
+      document.getElementById('m-instructions').value = r.instructions.join('\n'); 
+    } else { 
+      document.getElementById('m-instructions').value = ''; 
+    }
+    
+    // פתיחת החלון
+    document.getElementById('add-modal').classList.add('open');
+    
+  } catch(err) {
+    alert("שגיאה בעריכת המתכון:\n" + err.message);
+  }
 }
 
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
@@ -597,31 +630,45 @@ async function deleteRecipe(id) {
 
 async function saveNewRecipe(e) {
   e.preventDefault();
-  const editId = document.getElementById('m-id').value;
-  const title = document.getElementById('m-title').value.trim() || 'מתכון ללא שם';
-  const author = document.getElementById('m-author').value.trim() || 'משפחת מוטאי סניבר';
-  const category = document.getElementById('m-category').value || 'עיקריות';
-  const imageUrl = document.getElementById('m-image-url').value.trim();
-  const isPrivate = document.getElementById('m-private').checked;
-  const portions = parseFloat(document.getElementById('m-portions').value) || 1;
-  const primName = document.getElementById('m-prim-name').value.trim();
-  const primQty = parseFloat(document.getElementById('m-prim-qty').value) || null;
-  const nutrition = { cals: parseFloat(document.getElementById('m-cals').value) || 0, protein: parseFloat(document.getElementById('m-protein').value) || 0, carbs: parseFloat(document.getElementById('m-carbs').value) || 0, fat: parseFloat(document.getElementById('m-fat').value) || 0 };
-  const ingredients = document.getElementById('m-ingredients').value.split('\n').filter(l => l.trim()).map(l => { const parts = l.split('|'); return { name: parts[0]?.trim() || '', amount: parseFloat(parts[1]?.trim()) || parts[1]?.trim() || '', unit: parts[2]?.trim() || '' }; });
-  const instructions = document.getElementById('m-instructions').value.split('\n').filter(l => l.trim());
+  try {
+    const editId = document.getElementById('m-id').value;
+    const title = document.getElementById('m-title').value.trim() || 'מתכון ללא שם';
+    const author = document.getElementById('m-author').value.trim() || 'משפחת מוטאי סניבר';
+    const category = document.getElementById('m-category').value || 'עיקריות';
+    const imageUrl = document.getElementById('m-image-url').value.trim();
+    const isPrivate = document.getElementById('m-private').checked;
+    const portions = parseFloat(document.getElementById('m-portions').value) || 1;
+    const primName = document.getElementById('m-prim-name').value.trim();
+    const primQty = parseFloat(document.getElementById('m-prim-qty').value) || null;
+    const nutrition = { cals: parseFloat(document.getElementById('m-cals').value) || 0, protein: parseFloat(document.getElementById('m-protein').value) || 0, carbs: parseFloat(document.getElementById('m-carbs').value) || 0, fat: parseFloat(document.getElementById('m-fat').value) || 0 };
+    
+    const ingredients = document.getElementById('m-ingredients').value.split('\n').filter(l => l.trim()).map(l => { 
+      const parts = l.split('|'); 
+      return { name: parts[0]?.trim() || '', amount: parseFloat(parts[1]?.trim()) || parts[1]?.trim() || '', unit: parts[2]?.trim() || '' }; 
+    });
+    const instructions = document.getElementById('m-instructions').value.split('\n').filter(l => l.trim());
 
-  if (editId) {
-    const index = allRecipes.findIndex(item => item.id === editId);
-    if (index !== -1) {
-      const ownerId = allRecipes[index].ownerId || currentUser.id;
-      allRecipes[index] = { ...allRecipes[index], ownerId, title, author, category, imageUrl, isPrivate, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, nutrition, ingredients, instructions };
-      activeRecipeId = editId;
+    if (editId) {
+      const index = allRecipes.findIndex(item => item.id === editId);
+      if (index !== -1) {
+        const ownerId = allRecipes[index].ownerId || currentUser.id;
+        allRecipes[index] = { ...allRecipes[index], ownerId, title, author, category, imageUrl, isPrivate, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, nutrition, ingredients, instructions };
+        activeRecipeId = editId;
+      }
+    } else {
+      const newRecipe = { id: 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now()), ownerId: currentUser.id, isPrivate, title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, primaryUnit: 'גרם', isMeat: false, nutrition, ingredients, instructions };
+      allRecipes.unshift(newRecipe); activeRecipeId = newRecipe.id;
     }
-  } else {
-    const newRecipe = { id: 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now()), ownerId: currentUser.id, isPrivate, title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, primaryUnit: 'גרם', isMeat: false, nutrition, ingredients, instructions };
-    allRecipes.unshift(newRecipe); activeRecipeId = newRecipe.id;
+    
+    await persistToCloud(); 
+    closeAddModal(); 
+    document.getElementById('new-recipe-form').reset(); 
+    currentScale = 1.0; 
+    renderNavList(); 
+    renderActiveRecipe();
+  } catch(err) {
+    alert("שגיאה בשמירת המתכון: " + err.message);
   }
-  await persistToCloud(); closeAddModal(); document.getElementById('new-recipe-form').reset(); currentScale = 1.0; renderNavList(); renderActiveRecipe();
 }
 
 function exportData() {
