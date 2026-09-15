@@ -618,20 +618,20 @@ function renderActiveRecipe() {
         <h2>${r.isPrivate ? '<i class="fa-solid fa-lock" style="font-size:1.2rem; color:#a0aec0; margin-left:8px;" title="מתכון פרטי"></i>' : ''}${escapeHTML(r.title)}</h2>
         <span class="author-tag"><i class="fa-solid fa-star"></i> מאת: ${escapeHTML(r.author)}</span>
       </div>
-      <div style="display:flex; gap:4px; flex-wrap:nowrap; margin-top: 8px; width: 100%;">
-        <button class="btn btn-light" style="flex:1; padding: 8px 0;" onclick="toggleWakeLock(this)" title="מצב בישול (השאר מסך דולק)">
-          <i class="fa-regular fa-lightbulb" style="font-size:1.1rem;"></i>
+      <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
+        <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="toggleWakeLock(this)" title="מצב בישול (השאר מסך דולק)">
+          <i class="fa-regular fa-lightbulb" style="font-size:1rem;"></i>
         </button>
-        <button class="btn btn-light" style="flex:1; padding: 8px 0;" onclick="window.print()" title="הדפסת מתכון">
-          <i class="fa-solid fa-print" style="font-size:1.1rem;"></i>
+        <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="window.print()" title="הדפסת מתכון">
+          <i class="fa-solid fa-print" style="font-size:1rem;"></i>
         </button>
-        <button class="btn btn-light" style="flex:1; padding: 8px 0;" onclick="shareToWhatsApp()" style="border-color:#25D366; color:#25D366;" title="שתף לווטסאפ">
-          <i class="fa-brands fa-whatsapp" style="font-size:1.1rem;"></i>
+        <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="shareToWhatsApp()" style="border-color:#25D366; color:#25D366;" title="שתף לווטסאפ">
+          <i class="fa-brands fa-whatsapp" style="font-size:1rem;"></i>
         </button>
-        <button class="btn btn-light" style="flex:1; padding: 8px 0;" onclick="toggleFavorite('${escapeHTML(r.id)}')" style="border-color:${isFav ? '#e53e3e' : 'var(--border)'}; opacity:${isOffline ? '0.6' : '1'};" title="${isOffline ? 'סימון מועדפים אינו זמין במצב לא מקוון' : 'מועדפים'}">
-          <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" style="color:${isFav ? '#e53e3e' : 'var(--text-light)'}; font-size:1.1rem;"></i>
+        <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="toggleFavorite('${escapeHTML(r.id)}')" style="border-color:${isFav ? '#e53e3e' : 'var(--border)'}; opacity:${isOffline ? '0.6' : '1'};" title="${isOffline ? 'סימון מועדפים אינו זמין במצב לא מקוון' : 'מועדפים'}">
+          <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" style="color:${isFav ? '#e53e3e' : 'var(--text-light)'}; font-size:1rem;"></i>
         </button>
-        ${(isMine && !isOffline) ? `<button class="btn btn-red" style="flex:1; padding: 8px 0;" onclick="deleteRecipe('${escapeHTML(r.id)}')" title="מחיקת מתכון"><i class="fa-solid fa-trash-can" style="font-size:1.1rem;"></i></button><button class="btn btn-light" style="flex:1; padding: 8px 0;" onclick="openEditModal('${escapeHTML(r.id)}')" title="עריכת מתכון"><i class="fa-solid fa-pen" style="font-size:1.1rem;"></i></button>` : ''}
+        ${(isMine && !isOffline) ? `<button class="btn btn-red" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="deleteRecipe('${escapeHTML(r.id)}')" title="מחיקת מתכון"><i class="fa-solid fa-trash-can" style="font-size:1rem;"></i></button><button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="openEditModal('${escapeHTML(r.id)}')" title="עריכת מתכון"><i class="fa-solid fa-pen" style="font-size:1rem;"></i></button>` : ''}
       </div>
     </div>
     <div class="scaler-box">
