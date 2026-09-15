@@ -163,7 +163,8 @@
   .col-title { font-size: 12pt; font-weight: 800; color: var(--secondary); border-bottom: 2px solid var(--primary); padding-bottom: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
   
   .ing-list { list-style: none; padding: 0; margin: 0; }
-  .ing-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2ded7; font-size: 10pt; align-items: center; }
+  .ing-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2ded7; font-size: 10pt; align-items: center; cursor: pointer; transition: all 0.2s; user-select: none; }
+  .ing-row:hover { background: #faf9f6; }
   .ing-name { font-weight: 600; }
   .ing-qty { font-weight: 800; color: var(--primary-dark); background: #fdf3f0; padding: 2px 8px; border-radius: 6px; }
   
@@ -176,8 +177,11 @@
   .ai-chef-response { margin-top: 10px; font-size: 9.5pt; color: #4c1d95; background: #f3e8ff; padding: 10px; border-radius: 8px; line-height: 1.5; white-space: pre-wrap; }
   
   .inst-list { padding-right: 20px; margin: 0; font-size: 10.5pt; color: var(--text); line-height: 1.7; }
-  .inst-list li { margin-bottom: 12px; padding-right: 6px; }
+  .inst-list li { margin-bottom: 12px; padding-right: 6px; cursor: pointer; transition: all 0.2s; user-select: none; }
+  .inst-list li:hover { background: #faf9f6; }
   .inst-list li::marker { font-weight: 800; color: var(--primary); }
+  
+  .step-checked { text-decoration: line-through; opacity: 0.4; }
 
   @media (max-width: 850px) {
     .layout { grid-template-columns: 1fr; gap: 16px; }
@@ -615,6 +619,9 @@ function renderActiveRecipe() {
         <span class="author-tag"><i class="fa-solid fa-star"></i> מאת: ${escapeHTML(r.author)}</span>
       </div>
       <div style="display:flex; gap:8px;">
+        <button class="btn btn-light" onclick="toggleWakeLock(this)" title="מצב בישול (השאר מסך דולק)">
+          <i class="fa-regular fa-lightbulb" style="font-size:1.2rem;"></i>
+        </button>
         <button class="btn btn-light" onclick="window.print()" title="הדפסת מתכון">
           <i class="fa-solid fa-print" style="font-size:1.2rem;"></i>
         </button>
@@ -651,7 +658,7 @@ function renderActiveRecipe() {
         ${(r.ingredients || []).map(ing => {
           const scaled = (typeof ing.amount === 'number') ? (ing.amount * currentScale) : ing.amount;
           const displayQty = (typeof scaled === 'number') ? (scaled % 1 === 0 ? scaled : scaled.toFixed(1)) : (escapeHTML(String(scaled)) || '');
-          return `<li class="ing-row"><span class="ing-name">${escapeHTML(ing.name)}</span><span class="ing-qty">${displayQty} ${escapeHTML(ing.unit || '')}</span></li>`;
+          return `<li class="ing-row" onclick="this.classList.toggle('step-checked')" title="סמן כבוצע"><span class="ing-name">${escapeHTML(ing.name)}</span><span class="ing-qty">${displayQty} ${escapeHTML(ing.unit || '')}</span></li>`;
         }).join('')}
       </ul>
       <div class="ai-chef-box">
@@ -663,7 +670,7 @@ function renderActiveRecipe() {
         <div id="ai-chef-res-${r.id}" class="ai-chef-response" style="display:none;"></div>
       </div>
       </div>
-      <div><div class="col-title"><i class="fa-solid fa-fire-burner"></i> הוראות הכנה</div><ol class="inst-list">${(r.instructions || []).map(item => `<li>${escapeHTML(item)}</li>`).join('')}</ol></div>
+      <div><div class="col-title"><i class="fa-solid fa-fire-burner"></i> הוראות הכנה</div><ol class="inst-list">${(r.instructions || []).map(item => `<li onclick="this.classList.toggle('step-checked')" title="סמן כבוצע">${escapeHTML(item)}</li>`).join('')}</ol></div>
     </div>
     
     <div class="comments-section">
@@ -749,6 +756,31 @@ async function askAiAssistant(recipeId) {
   } catch (err) {
     resEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i> אירעה שגיאה. נסה שוב.';
     console.error(err);
+  }
+}
+
+let wakeLock = null;
+async function toggleWakeLock(btnEl) {
+  if (!('wakeLock' in navigator)) { alert('הדפדפן שלך לא תומך במצב בישול.'); return; }
+  try {
+    if (wakeLock !== null) {
+      await wakeLock.release();
+      wakeLock = null;
+      btnEl.style.borderColor = 'var(--border)';
+      btnEl.style.color = 'var(--text-light)';
+    } else {
+      wakeLock = await navigator.wakeLock.request('screen');
+      btnEl.style.borderColor = '#d69e2e';
+      btnEl.style.color = '#d69e2e';
+      wakeLock.addEventListener('release', () => {
+        wakeLock = null;
+        btnEl.style.borderColor = 'var(--border)';
+        btnEl.style.color = 'var(--text-light)';
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    alert('שגיאה בהפעלת מצב בישול: ' + err.message);
   }
 }
 
