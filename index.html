@@ -384,7 +384,9 @@ function renderActiveRecipe() {
   const scaledPortions = (r.basePortions * currentScale);
   const formattedPortions = (scaledPortions % 1 === 0) ? scaledPortions : scaledPortions.toFixed(1);
   const isFav = userFavorites.includes(r.id);
-  const isMine = (r.ownerId === currentUser?.id);
+  
+  // התיקון כאן: הבעלים הוא מי שיצר, *או* אם אין למתכון בעלים (מתכון ישן שכולם יכולים לערוך)
+  const isMine = (!r.ownerId || r.ownerId === currentUser?.id);
 
   let imageHTML = '';
   if (r.imageUrl && r.imageUrl.trim() !== '') { imageHTML = `<img src="${escapeHTML(r.imageUrl)}" alt="${escapeHTML(r.title)}" class="recipe-cover-img" loading="lazy">`; }
@@ -477,7 +479,9 @@ function openAddModal() {
 
 function openEditModal(id) {
   const r = allRecipes.find(item => item.id === id);
-  if (!r || (r.ownerId !== currentUser?.id)) return; // רק הבעלים יכול לערוך
+  // התיקון גם כאן: מי שאין לו בעלים (ישן) - מותר לערוך
+  if (!r || (r.ownerId && r.ownerId !== currentUser?.id)) return; 
+  
   document.getElementById('modal-heading').innerHTML = `<i class="fa-solid fa-pen"></i> עריכת מתכון: ${escapeHTML(r.title)}`;
   document.getElementById('m-id').value = r.id;
   document.getElementById('m-title').value = r.title || '';
@@ -564,7 +568,7 @@ async function importData(event) {
         allRecipes = data; activeRecipeId = allRecipes[0]?.id; currentScale = 1.0;
         await persistToCloud(); renderNavList(); renderActiveRecipe(); alert('ספר המתכונים יובא בהצלחה!');
       }
-    } catch(err) { alert('שגיאה בקריאת הקובץ.'); }
+    } catch(err) { alert('שגיאה בקריאת הקובץ. ודא שזהו קובץ JSON תקין.'); }
   };
   reader.readAsText(file);
 }
@@ -612,6 +616,10 @@ if(supabaseClient) { checkSession(); }
       <div class="form-row">
         <div class="form-group"><label>קלוריות:</label><input type="number" id="m-cals" class="form-control" placeholder="0"></div>
         <div class="form-group"><label>חלבון (גרם):</label><input type="number" id="m-protein" class="form-control" placeholder="0" step="0.1"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>פחמימות (גרם):</label><input type="number" id="m-carbs" class="form-control" placeholder="0" step="0.1"></div>
+        <div class="form-group"><label>שומן (גרם):</label><input type="number" id="m-fat" class="form-control" placeholder="0" step="0.1"></div>
       </div>
       <div class="form-group">
         <label>מצרכים (שורה לכל מצרך, בפורמט: שם | כמות | יחידה):</label>
