@@ -201,6 +201,16 @@ let currentUser = null;
 let syncInterval = null;
 let userFavorites = [];
 
+// ==============================================
+// 🌟 הגדרות מנהל המערכת (MASTER) 🌟
+// שים כאן את האימייל שאיתו נרשמת. מנהל רואה את הכל ויכול לערוך את הכל.
+const MASTER_EMAILS = ['maayan.motai@gmail.com']; 
+// ==============================================
+
+function isMaster() {
+  return currentUser && MASTER_EMAILS.includes(currentUser.email);
+}
+
 const defaultRecipes = [
   { id: "patties", title: "קציצות עוף, קינואה וירקות (30 יחידות)", author: "מעין", category: "עיקריות", imageUrl: "", basePortions: 30, primaryName: "חזה עוף טחון", primaryAmount: 1680, primaryUnit: "גרם", isMeat: false, nutrition: { cals: 3000, protein: 435, carbs: 204, fat: 45 }, ingredients: [{ name: "חזה עוף טחון", amount: 1680, unit: "גרם" }, { name: "ביצים (L)", amount: 2, unit: "יחידות" }], instructions: ["אופים ב-200 מעלות."] }
 ];
@@ -254,7 +264,8 @@ function loginSuccess(user) {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app-container').style.display = 'block';
   const username = user.email.split('@')[0];
-  document.getElementById('user-display').innerHTML = `<i class="fa-regular fa-user" style="margin-left:5px;"></i> מחובר כ: ${username}`;
+  const masterTag = isMaster() ? ' <span style="font-size:0.8em; background:#e2e8f0; color:#4a5568; padding:2px 6px; border-radius:10px; margin-right:4px;">מנהל</span>' : '';
+  document.getElementById('user-display').innerHTML = `<i class="fa-regular fa-user" style="margin-left:5px;"></i> מחובר כ: ${username}${masterTag}`;
   initApp();
 }
 
@@ -268,7 +279,6 @@ function initApp() {
     if (saved) { const parsed = JSON.parse(saved); if (Array.isArray(parsed) && parsed.length > 0) { allRecipes = parsed; } } 
     else { allRecipes = defaultRecipes; }
     
-    // שליפת מועדפים מקומיים
     const savedFavs = localStorage.getItem(getFavKey());
     if (savedFavs) { userFavorites = JSON.parse(savedFavs); }
   } catch (e) {}
@@ -287,7 +297,6 @@ function initApp() {
 async function fetchCloudAndMerge() {
   if (!supabaseClient || !currentUser) return;
   try {
-    // שולף גם את המאגר המשותף וגם את המועדפים של המשתמש בענן
     const { data, error } = await supabaseClient.from('recipes').select('*').in('id', ['master_db', 'fav_' + currentUser.id]);
     if (error || !data) return;
     
@@ -327,13 +336,9 @@ async function persistToCloud() {
 async function toggleFavorite(id) {
   if (userFavorites.includes(id)) { userFavorites = userFavorites.filter(f => f !== id); } 
   else { userFavorites.push(id); }
-  
   localStorage.setItem(getFavKey(), JSON.stringify(userFavorites));
   renderNavList(); renderActiveRecipe();
-  
-  if (supabaseClient) {
-    await supabaseClient.from('recipes').upsert({ id: 'fav_' + currentUser.id, data: userFavorites });
-  }
+  if (supabaseClient) { await supabaseClient.from('recipes').upsert({ id: 'fav_' + currentUser.id, data: userFavorites }); }
 }
 
 function renderNavList() {
@@ -341,16 +346,14 @@ function renderNavList() {
   const term = document.getElementById('search-box').value.trim().toLowerCase();
   
   const filtered = allRecipes.filter(r => {
-    // 1. סינון מתכונים פרטיים של אחרים
-    if (r.isPrivate && r.ownerId !== currentUser?.id) return false;
+    // מנהל רואה הכל. משתמש רגיל לא רואה מתכונים פרטיים של אחרים.
+    if (r.isPrivate && r.ownerId !== currentUser?.id && !isMaster()) return false;
     
-    // 2. סינון קטגוריה / מועדפים
     let matchCat = false;
     if (currentCategory === 'all') matchCat = true;
     else if (currentCategory === 'favorites') matchCat = userFavorites.includes(r.id);
     else matchCat = (r.category === currentCategory);
     
-    // 3. סינון חיפוש
     const matchSearch = (!term || r.title.toLowerCase().includes(term) || r.author.toLowerCase().includes(term));
     return matchCat && matchSearch;
   });
@@ -371,9 +374,7 @@ function renderNavList() {
 function selectRecipe(id) {
   activeRecipeId = id; currentScale = 1.0;
   renderNavList(); renderActiveRecipe();
-  if (window.innerWidth <= 850) {
-    document.getElementById('recipe-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  if (window.innerWidth <= 850) { document.getElementById('recipe-view').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 }
 
 function renderActiveRecipe() {
@@ -385,8 +386,8 @@ function renderActiveRecipe() {
   const formattedPortions = (scaledPortions % 1 === 0) ? scaledPortions : scaledPortions.toFixed(1);
   const isFav = userFavorites.includes(r.id);
   
-  // התיקון כאן: הבעלים הוא מי שיצר, *או* אם אין למתכון בעלים (מתכון ישן שכולם יכולים לערוך)
-  const isMine = (!r.ownerId || r.ownerId === currentUser?.id);
+  // בעלים = מי שיצר את המתכון, או מתכון ישן ללא בעלים, או שמדובר במנהל על
+  const isMine = (!r.ownerId || r.ownerId === currentUser?.id || isMaster());
 
   let imageHTML = '';
   if (r.imageUrl && r.imageUrl.trim() !== '') { imageHTML = `<img src="${escapeHTML(r.imageUrl)}" alt="${escapeHTML(r.title)}" class="recipe-cover-img" loading="lazy">`; }
@@ -479,8 +480,7 @@ function openAddModal() {
 
 function openEditModal(id) {
   const r = allRecipes.find(item => item.id === id);
-  // התיקון גם כאן: מי שאין לו בעלים (ישן) - מותר לערוך
-  if (!r || (r.ownerId && r.ownerId !== currentUser?.id)) return; 
+  if (!r || (r.ownerId && r.ownerId !== currentUser?.id && !isMaster())) return; 
   
   document.getElementById('modal-heading').innerHTML = `<i class="fa-solid fa-pen"></i> עריכת מתכון: ${escapeHTML(r.title)}`;
   document.getElementById('m-id').value = r.id;
@@ -543,7 +543,9 @@ async function saveNewRecipe(e) {
   if (editId) {
     const index = allRecipes.findIndex(item => item.id === editId);
     if (index !== -1) {
-      allRecipes[index] = { ...allRecipes[index], title, author, category, imageUrl, isPrivate, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, nutrition, ingredients, instructions };
+      // אם למתכון הישן אין בעלים, אבל אנחנו עורכים אותו לפרטי - הבעלים הוא מי שעורך כרגע
+      const ownerId = allRecipes[index].ownerId || currentUser.id;
+      allRecipes[index] = { ...allRecipes[index], ownerId, title, author, category, imageUrl, isPrivate, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, nutrition, ingredients, instructions };
       activeRecipeId = editId;
     }
   } else {
@@ -589,7 +591,7 @@ if(supabaseClient) { checkSession(); }
       <!-- הגדרת פרטיות -->
       <div class="form-group checkbox-wrap" style="margin-bottom: 20px;">
         <input type="checkbox" id="m-private">
-        <label for="m-private"><i class="fa-solid fa-lock" style="margin-left: 4px;"></i> מתכון פרטי (יוצג רק לי)</label>
+        <label for="m-private"><i class="fa-solid fa-lock" style="margin-left: 4px;"></i> מתכון פרטי (יוצג רק לי ולמנהל האתר)</label>
       </div>
 
       <div class="form-row">
