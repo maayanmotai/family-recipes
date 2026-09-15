@@ -740,6 +740,7 @@ function openAddModal() {
   document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-plus"></i> הוספת מתכון לספר'; document.getElementById('m-id').value = '';
   document.getElementById('new-recipe-form').reset(); document.getElementById('m-private').checked = false;
   if(currentUser && currentUser.email) { document.getElementById('m-author').value = currentUser.email.split('@')[0]; }
+  clearAiImage(); document.getElementById('ai-input-text').value = ''; document.getElementById('ai-box').style.display = 'none';
   document.getElementById('upload-status').style.display = 'none'; document.getElementById('add-modal').classList.add('open');
 }
 
@@ -844,7 +845,7 @@ checkSession();
         <textarea id="ai-input-text" class="form-control" rows="4" placeholder="הדבק לכאן מתכון מבולגן, או לחלופין צלם תמונה של מתכון 👇..." style="margin-bottom: 10px; font-size: 9.5pt;"></textarea>
         
         <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-          <input type="file" id="ai-image-upload" accept="image/*" capture="environment" style="display:none" onchange="previewAiImage(event)">
+          <input type="file" id="ai-image-upload" accept="image/*" style="display:none" onchange="previewAiImage(event)">
           <button type="button" class="btn btn-light" style="flex: 1; border-color: #c7d2fe; color: #4338ca;" onclick="document.getElementById('ai-image-upload').click()">
             <i class="fa-solid fa-camera"></i> בחר תמונה / צלם
           </button>
