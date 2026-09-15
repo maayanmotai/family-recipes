@@ -643,23 +643,56 @@ function scaleByPrimary(val) { const num = parseFloat(val); const r = allRecipes
 function setCategory(cat, el) { currentCategory = cat; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderNavList(); }
 function filterRecipes() { renderNavList(); }
 
+let aiImageData = null;
+let aiImageMime = null;
+
 function toggleAiBox() {
   const box = document.getElementById('ai-box');
   box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }
 
+function previewAiImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    aiImageData = event.target.result.split(',')[1];
+    aiImageMime = file.type;
+    document.getElementById('ai-image-preview').src = event.target.result;
+    document.getElementById('ai-image-preview-container').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearAiImage() {
+  aiImageData = null;
+  aiImageMime = null;
+  document.getElementById('ai-image-upload').value = '';
+  document.getElementById('ai-image-preview-container').style.display = 'none';
+}
+
 async function processAiImport(btn) {
   if (isOffline || !navigator.onLine) { alert("ייבוא חכם דורש חיבור לאינטרנט."); return; }
   const text = document.getElementById('ai-input-text').value.trim();
-  if (!text) { alert("אנא הדבק טקסט לפני הלחיצה."); return; }
+  
+  if (!text && !aiImageData) { 
+    alert("אנא הדבק טקסט או בחר תמונה לפני הלחיצה."); 
+    return; 
+  }
   
   const originalHtml = btn.innerHTML;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> מנתח עם AI...';
   btn.disabled = true;
 
   try {
+    const payload = { text: text };
+    if (aiImageData) {
+      payload.image_base64 = aiImageData;
+      payload.image_mime_type = aiImageMime;
+    }
+
     const { data, error } = await supabaseClient.functions.invoke('parse-recipe', {
-      body: { text: text }
+      body: payload
     });
 
     if (error) throw error;
@@ -668,10 +701,13 @@ async function processAiImport(btn) {
 
     const r = data.recipe;
     if (r.title) document.getElementById('m-title').value = r.title;
-    if (r.author) document.getElementById('m-author').value = r.author;
+    if (r.author && r.author !== 'מקור לא ידוע') document.getElementById('m-author').value = r.author;
     if (r.category) document.getElementById('m-category').value = r.category;
     if (r.basePortions) document.getElementById('m-portions').value = r.basePortions;
     
+    if (r.primaryName) document.getElementById('m-prim-name').value = r.primaryName;
+    if (r.primaryAmount !== undefined && r.primaryAmount !== null) document.getElementById('m-prim-qty').value = r.primaryAmount;
+
     if (r.nutrition) {
       if (r.nutrition.cals) document.getElementById('m-cals').value = r.nutrition.cals;
       if (r.nutrition.protein) document.getElementById('m-protein').value = r.nutrition.protein;
@@ -681,7 +717,7 @@ async function processAiImport(btn) {
 
     if (r.ingredients && Array.isArray(r.ingredients)) {
       document.getElementById('m-ingredients').value = r.ingredients.map(ing => 
-        `${ing.name || ''} | ${ing.amount !== undefined ? ing.amount : ''} | ${ing.unit || ''}`.trim()
+        `${ing.name || ''} | ${ing.amount !== undefined && ing.amount !== null ? ing.amount : ''} | ${ing.unit || ''}`.trim()
       ).join('\n');
     }
 
@@ -692,7 +728,7 @@ async function processAiImport(btn) {
     alert("הניתוח הושלם בהצלחה! אנא עבור על הנתונים וודא שהכל תקין לפני השמירה.");
     toggleAiBox(); // close box
   } catch (err) {
-    alert("שגיאה בניתוח הטקסט. האם השרת למעלה? פרטים: " + err.message);
+    alert("שגיאה בניתוח: " + err.message);
   } finally {
     btn.innerHTML = originalHtml;
     btn.disabled = false;
@@ -805,7 +841,19 @@ checkSession();
         <button type="button" class="btn btn-light" style="font-size: 8pt; padding: 6px 12px; border-color: #c7d2fe; color: #4338ca;" onclick="toggleAiBox()">פתח / סגור</button>
       </div>
       <div id="ai-box" style="display: none; margin-top: 12px;">
-        <textarea id="ai-input-text" class="form-control" rows="4" placeholder="הדבק לכאן מתכון מבולגן או רשימת מצרכים והוראות, וה-AI יסדר הכל במקומות הנכונים..." style="margin-bottom: 10px; font-size: 9.5pt;"></textarea>
+        <textarea id="ai-input-text" class="form-control" rows="4" placeholder="הדבק לכאן מתכון מבולגן, או לחלופין צלם תמונה של מתכון 👇..." style="margin-bottom: 10px; font-size: 9.5pt;"></textarea>
+        
+        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+          <input type="file" id="ai-image-upload" accept="image/*" capture="environment" style="display:none" onchange="previewAiImage(event)">
+          <button type="button" class="btn btn-light" style="flex: 1; border-color: #c7d2fe; color: #4338ca;" onclick="document.getElementById('ai-image-upload').click()">
+            <i class="fa-solid fa-camera"></i> בחר תמונה / צלם
+          </button>
+          <div id="ai-image-preview-container" style="display:none; align-items:center; gap:8px;">
+            <img id="ai-image-preview" style="height: 36px; border-radius: 4px; border: 1px solid #c7d2fe;">
+            <button type="button" class="btn btn-light" style="padding: 4px 8px; font-size: 8pt; color: #d34848;" onclick="clearAiImage()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
         <button type="button" class="btn btn-green" style="width: 100%; background: #4f46e5; border: none;" onclick="processAiImport(this)"><i class="fa-solid fa-robot"></i> נתח ומלא אוטומטית</button>
       </div>
     </div>
