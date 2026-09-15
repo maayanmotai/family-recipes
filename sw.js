@@ -2,6 +2,12 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
+self.addEventListener('activate', (e) => {
+  e.waitUntil(clients.claim());
+});
+
 self.addEventListener('fetch', (e) => {
-  // קובץ ריק רק כדי שכרום יאשר את ההתקנה כאפליקציה
+  e.respondWith(
+    fetch(e.request).catch(() => new Response('Offline'))
+  );
 });
