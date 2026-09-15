@@ -258,7 +258,7 @@ function escapeHTML(str) {
 async function checkSession() {
   const msgEl = document.getElementById('auth-msg');
   if (!supabaseClient) {
-    msgEl.innerText = "שגיאת חיבור לשרת. נסה לרענן.";
+    msgEl.innerText = "שגיאת חיבור לשרת (אולי יש לך חוסם פרסומות או שאין אינטרנט?). נסה לרענן.";
     return;
   }
   try {
@@ -275,7 +275,7 @@ async function checkSession() {
 async function handleLogin() {
   const msgEl = document.getElementById('auth-msg');
   msgEl.innerText = "";
-  if (!supabaseClient) { msgEl.innerText = "שגיאה: השרת לא נטען. נסה לרענן."; return; }
+  if (!supabaseClient) { msgEl.innerText = "שגיאה: השרת לא נטען. נסה לרענן את העמוד."; return; }
   
   const email = document.getElementById('auth-email').value; 
   const password = document.getElementById('auth-password').value;
@@ -294,7 +294,7 @@ async function handleLogin() {
 async function handleSignup() {
   const msgEl = document.getElementById('auth-msg');
   msgEl.innerText = "";
-  if (!supabaseClient) { msgEl.innerText = "שגיאה: השרת לא נטען."; return; }
+  if (!supabaseClient) { msgEl.innerText = "שגיאה: השרת לא נטען. נסה לרענן."; return; }
 
   const email = document.getElementById('auth-email').value; 
   const password = document.getElementById('auth-password').value;
@@ -415,11 +415,11 @@ async function toggleFavorite(id) {
   if (supabaseClient) { await supabaseClient.from('recipes').upsert({ id: 'fav_' + currentUser.id, data: userFavorites }); }
 }
 
-function renderNavList() {
-  const navEl = document.getElementById('recipe-list-nav');
+// הפונקציה שעושה את כל הסינון של המתכונים
+function getFilteredRecipes() {
   const term = document.getElementById('search-box').value.trim().toLowerCase();
-  
-  const filtered = allRecipes.filter(r => {
+  return allRecipes.filter(r => {
+    // מנהל רואה גם פרטיים של אחרים, משתמש רגיל לא
     if (r.isPrivate && r.ownerId !== currentUser?.id && !isMaster()) return false;
     
     let matchCat = false;
@@ -430,6 +430,11 @@ function renderNavList() {
     const matchSearch = (!term || r.title.toLowerCase().includes(term) || r.author.toLowerCase().includes(term));
     return matchCat && matchSearch;
   });
+}
+
+function renderNavList() {
+  const filtered = getFilteredRecipes();
+  const navEl = document.getElementById('recipe-list-nav');
   
   navEl.innerHTML = filtered.map(r => {
     const isFav = userFavorites.includes(r.id);
@@ -446,14 +451,50 @@ function renderNavList() {
 
 function selectRecipe(id) {
   activeRecipeId = id; currentScale = 1.0;
-  renderNavList(); renderActiveRecipe();
-  if (window.innerWidth <= 850) { document.getElementById('recipe-view').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  renderNavList(); 
+  renderActiveRecipe();
+  if (window.innerWidth <= 850) { 
+    document.getElementById('recipe-view').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+  }
+}
+
+// הפונקציה שמתעדכנת כשלוחצים על קטגוריה - כדי להחליף מיד את המתכון במסך!
+function setCategory(cat, el) { 
+  currentCategory = cat; 
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); 
+  if(el) el.classList.add('active'); 
+  
+  const filtered = getFilteredRecipes();
+  if (filtered.length > 0) {
+    // בוחר אוטומטית את המתכון הראשון בקטגוריה כדי לתת למשתמש תגובה מיידית
+    activeRecipeId = filtered[0].id;
+  } else {
+    activeRecipeId = null;
+  }
+  currentScale = 1.0;
+  
+  renderNavList(); 
+  renderActiveRecipe();
+}
+
+function filterRecipes() { 
+  const filtered = getFilteredRecipes();
+  // אם המתכון הנוכחי כבר לא ברשימה המסוננת, נחליף אותו לראשון
+  if (!filtered.some(r => r.id === activeRecipeId)) {
+      activeRecipeId = filtered.length > 0 ? filtered[0].id : null;
+      currentScale = 1.0;
+  }
+  renderNavList(); 
+  renderActiveRecipe();
 }
 
 function renderActiveRecipe() {
   const r = allRecipes.find(item => item.id === activeRecipeId);
   const viewEl = document.getElementById('recipe-view');
-  if (!r) { viewEl.innerHTML = '<p style="text-align:center; color:#7a7571; padding:40px; font-weight:600;"><i class="fa-solid fa-utensils" style="font-size:2rem; display:block; margin-bottom:10px; color:#dcdad4;"></i>בחר מתכון מהרשימה כדי להתחיל</p>'; return; }
+  if (!r) { 
+    viewEl.innerHTML = '<p style="text-align:center; color:#7a7571; padding:40px; font-weight:600;"><i class="fa-solid fa-utensils" style="font-size:2rem; display:block; margin-bottom:10px; color:#dcdad4;"></i>אין מתכונים בקטגוריה זו</p>'; 
+    return; 
+  }
 
   const scaledPortions = (r.basePortions * currentScale);
   const formattedPortions = (scaledPortions % 1 === 0) ? scaledPortions : scaledPortions.toFixed(1);
@@ -689,64 +730,6 @@ async function importData(event) {
 
 if(supabaseClient) { checkSession(); }
 </script>
-
-<!-- Modal: Add/Edit Recipe -->
-<div class="modal-overlay" id="add-modal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 id="modal-heading"><i class="fa-solid fa-plus"></i> הוספת מתכון לספר</h3>
-      <button class="close-btn" onclick="closeAddModal()"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <form id="new-recipe-form" onsubmit="saveNewRecipe(event)">
-      <input type="hidden" id="m-id" value="">
-      
-      <!-- הגדרת פרטיות -->
-      <div class="form-group checkbox-wrap" style="margin-bottom: 20px;">
-        <input type="checkbox" id="m-private">
-        <label for="m-private"><i class="fa-solid fa-lock" style="margin-left: 4px;"></i> מתכון פרטי (יוצג רק לי ולמנהל האתר)</label>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group"><label>שם המתכון:</label><input type="text" id="m-title" class="form-control" placeholder="למשל: עראייס ביתי" required></div>
-        <div class="form-group"><label>מתכון מאת:</label><input type="text" id="m-author" class="form-control" placeholder="שם המחבר"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>קטגוריה:</label><select id="m-category" class="form-control"><option value="עיקריות">עיקריות</option><option value="תוספות">תוספות</option><option value="רטבים">רטבים</option><option value="קינוחים">קינוחים</option></select></div>
-        <div class="form-group"><label>מספר מנות בסיס:</label><input type="number" id="m-portions" class="form-control" placeholder="4" min="0.5" step="0.5"></div>
-      </div>
-      <div class="form-group">
-        <label>תמונה (URL או העלאה):</label>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="m-image-url" class="form-control" placeholder="הדבק קישור או העלה..." style="flex: 1;">
-          <button type="button" class="btn btn-light" onclick="document.getElementById('image-upload').click()" style="white-space: nowrap;"><i class="fa-solid fa-cloud-arrow-up"></i> העלה</button>
-          <input type="file" id="image-upload" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
-        </div>
-        <small id="upload-status" style="font-weight: 600; margin-top: 6px; display: none;"></small>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>מרכיב ראשי לסקלר (אופציונלי):</label><input type="text" id="m-prim-name" class="form-control" placeholder="למשל: בשר טחון"></div>
-        <div class="form-group"><label>כמות (גרמים):</label><input type="number" id="m-prim-qty" class="form-control" placeholder="800"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>קלוריות:</label><input type="number" id="m-cals" class="form-control" placeholder="0"></div>
-        <div class="form-group"><label>חלבון (גרם):</label><input type="number" id="m-protein" class="form-control" placeholder="0" step="0.1"></div>
-      </div>
-      <div class="form-row">
-        <div class="form-group"><label>פחמימות (גרם):</label><input type="number" id="m-carbs" class="form-control" placeholder="0" step="0.1"></div>
-        <div class="form-group"><label>שומן (גרם):</label><input type="number" id="m-fat" class="form-control" placeholder="0" step="0.1"></div>
-      </div>
-      <div class="form-group">
-        <label>מצרכים (שורה לכל מצרך, בפורמט: שם | כמות | יחידה):</label>
-        <textarea id="m-ingredients" class="form-control" rows="4" placeholder="בשר טחון | 800 | גרם"></textarea>
-      </div>
-      <div class="form-group">
-        <label>הוראות הכנה (שורה לכל שלב):</label>
-        <textarea id="m-instructions" class="form-control" rows="4" placeholder="1. מחממים תנור..."></textarea>
-      </div>
-      <button type="submit" class="btn btn-green" style="width:100%; padding:12px; font-size:11pt; margin-top:10px;"><i class="fa-solid fa-floppy-disk"></i> שמירה לספר המתכונים</button>
-    </form>
-  </div>
-</div>
 
 </body>
 </html>
