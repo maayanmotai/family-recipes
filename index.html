@@ -666,6 +666,12 @@ function loginSuccess(user) {
 function getLocalKey() { return 'my_recipes_db_shared'; }
 function getFavKey() { return 'my_favs_' + (currentUser ? currentUser.id : 'guest'); }
 
+function getDefaultRecipeId() {
+  if (!allRecipes || allRecipes.length === 0) return null;
+  const target = allRecipes.find(r => r.title.includes('קציצות עוף קינואה וירקות'));
+  return target ? target.id : allRecipes[0].id;
+}
+
 function initApp() {
   try {
     const saved = localStorage.getItem(getLocalKey());
@@ -674,7 +680,7 @@ function initApp() {
     if (savedFavs) { userFavorites = JSON.parse(savedFavs); }
   } catch (e) {}
 
-  if (!activeRecipeId || !allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = allRecipes[0]?.id || null; }
+  if (!activeRecipeId || !allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = getDefaultRecipeId(); }
   renderNavList(); renderActiveRecipe();
   updateNetworkUI();
 
@@ -741,7 +747,7 @@ async function fetchCloudAndMerge() {
       const cloudJson = JSON.stringify(masterRow.data);
       if (cloudJson !== JSON.stringify(allRecipes)) {
         allRecipes = masterRow.data; localStorage.setItem(getLocalKey(), JSON.stringify(allRecipes));
-        if (!allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = allRecipes[0]?.id || null; }
+        if (!allRecipes.some(r => r.id === activeRecipeId)) { activeRecipeId = getDefaultRecipeId(); }
         renderNavList(); renderActiveRecipe();
       }
     }
@@ -1391,7 +1397,7 @@ async function deleteRecipe(id) {
   if (isOffline || !navigator.onLine) { alert("מחיקת מתכון אינה אפשרית במצב לא מקוון (קריאה בלבד)."); return; }
   if (confirm("למחוק את המתכון הזה לצמיתות?")) {
     allRecipes = allRecipes.filter(r => r.id !== id);
-    if (activeRecipeId === id) { activeRecipeId = allRecipes.length > 0 ? allRecipes[0].id : null; }
+    if (activeRecipeId === id) { activeRecipeId = getDefaultRecipeId(); }
     await persistToCloud(); renderNavList(); renderActiveRecipe();
   }
 }
@@ -1432,7 +1438,7 @@ async function importData(event) {
     try {
       const data = JSON.parse(e.target.result);
       if (Array.isArray(data) && data.length > 0) {
-        allRecipes = data; activeRecipeId = allRecipes[0]?.id; currentScale = 1.0;
+        allRecipes = data; activeRecipeId = getDefaultRecipeId(); currentScale = 1.0;
         await persistToCloud(); renderNavList(); renderActiveRecipe(); alert('ספר המתכונים יובא בהצלחה!');
       }
     } catch(err) { alert('שגיאה בקריאת הקובץ.'); }
