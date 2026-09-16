@@ -340,7 +340,7 @@ let allRecipes = defaultRecipes;
 let activeRecipeId = null;
 let currentCategory = 'all';
 let currentScale = 1.0;
-
+let currentFatType = null;
 function escapeHTML(str) {
   if (typeof str !== 'string') return str;
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -815,7 +815,7 @@ function renderNavList() {
 }
 
 function selectRecipe(id) {
-  activeRecipeId = id; currentScale = 1.0;
+  activeRecipeId = id; currentScale = 1.0; currentFatType = null;
   renderNavList(); renderActiveRecipe();
   if (window.innerWidth <= 850) { document.getElementById('recipe-view').scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 }
@@ -832,10 +832,12 @@ function renderActiveRecipe() {
   const imageHTML = (r.imageUrl && r.imageUrl.trim() !== '') ? `<img src="${escapeHTML(r.imageUrl)}" alt="${escapeHTML(r.title)}" class="recipe-cover-img" loading="lazy">` : '';
 
   let primaryControl = '';
+  let fatControl = '';
   if (r.primaryName && r.primaryAmount) {
     const scaledPrimary = (r.primaryAmount * currentScale);
     const displayPrimary = (scaledPrimary % 1 === 0) ? scaledPrimary : Number(scaledPrimary.toFixed(2));
     primaryControl = `<div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label><div class="scaler-input-wrap"><input type="number" id="scaler-primary-input" value="${displayPrimary}" step="any" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div></div>`;
+    fatControl = `<div class="scaler-item"><label>אחוז שומן מותאם (בשר/חלב):</label><div class="scaler-input-wrap"><select id="scaler-fat-select" class="form-control" onchange="scaleByFat(this.value)" style="width:100%; border:none;"><option value="">לפי המתכון</option><option value="beef_5" ${currentFatType==='beef_5'?'selected':''}>בקר 5%</option><option value="beef_9" ${currentFatType==='beef_9'?'selected':''}>בקר 9%</option><option value="beef_15" ${currentFatType==='beef_15'?'selected':''}>בקר 15%</option><option value="beef_20" ${currentFatType==='beef_20'?'selected':''}>בקר 20%</option><option value="cheese_5" ${currentFatType==='cheese_5'?'selected':''}>גבינה/חלב 5%</option><option value="cheese_9" ${currentFatType==='cheese_9'?'selected':''}>גבינה/חלב 9%</option></select></div></div>`;
   }
 
 
@@ -871,6 +873,7 @@ function renderActiveRecipe() {
       </div>
       <div class="scaler-grid">
         ${primaryControl}
+        ${fatControl}
         <div class="scaler-item"><label>מספר מנות:</label><div class="scaler-input-wrap"><input type="number" id="scaler-portions-input" value="${formattedPortions}" step="0.5" oninput="scaleByPortions(this.value)"><span class="scaler-unit">מנות</span></div></div>
       </div>
     </div>
@@ -904,8 +907,27 @@ function renderActiveRecipe() {
 
 function getDynamicHTML(r, currentScale) {
   const scaledPortions = (r.basePortions * currentScale);
-  const nut = r.nutrition || { cals: 0, protein: 0, carbs: 0, fat: 0 };
-  let cals = Math.round(nut.cals * currentScale), protein = Math.round(nut.protein * currentScale), carbs = Math.round(nut.carbs * currentScale), fat = Math.round(nut.fat * currentScale);
+  let cals = 0, protein = 0, carbs = 0, fat = 0;
+  if (currentFatType && r.primaryAmount) {
+    const qty = (r.primaryAmount * currentScale);
+    let c100 = 0, p100 = 0, ca100 = 0, f100 = 0;
+    switch(currentFatType) {
+      case 'beef_5': c100=135; p100=22; ca100=0; f100=5; break;
+      case 'beef_9': c100=170; p100=20; ca100=0; f100=9; break;
+      case 'beef_15': c100=215; p100=19; ca100=0; f100=15; break;
+      case 'beef_20': c100=250; p100=17; ca100=0; f100=20; break;
+      case 'cheese_5': c100=95; p100=10; ca100=3; f100=5; break;
+      case 'cheese_9': c100=135; p100=10; ca100=3; f100=9; break;
+    }
+    const mult = qty / 100;
+    cals = Math.round(c100 * mult);
+    protein = +(p100 * mult).toFixed(1);
+    carbs = +(ca100 * mult).toFixed(1);
+    fat = +(f100 * mult).toFixed(1);
+  } else {
+    const nut = r.nutrition || { cals: 0, protein: 0, carbs: 0, fat: 0 };
+    cals = Math.round(nut.cals * currentScale); protein = Math.round(nut.protein * currentScale); carbs = Math.round(nut.carbs * currentScale); fat = Math.round(nut.fat * currentScale);
+  }
   const perCals = scaledPortions > 0 ? Math.round(cals / scaledPortions) : 0, perProtein = scaledPortions > 0 ? (protein / scaledPortions).toFixed(1) : 0, perCarbs = scaledPortions > 0 ? (carbs / scaledPortions).toFixed(1) : 0, perFat = scaledPortions > 0 ? (fat / scaledPortions).toFixed(1) : 0;
 
   return `
@@ -952,12 +974,14 @@ function updateDynamicUI(r) {
   
   const primaryInput = document.getElementById('scaler-primary-input');
   if (primaryInput && document.activeElement !== primaryInput) {
-    primaryInput.value = Math.round(r.primaryAmount * currentScale);
+    const scaledPrimary = (r.primaryAmount * currentScale);
+    primaryInput.value = (scaledPrimary % 1 === 0) ? scaledPrimary : Number(scaledPrimary.toFixed(2));
   }
 }
 
 function scaleByPortions(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r) { currentScale = num / r.basePortions; updateDynamicUI(r); } }
 function scaleByPrimary(val) { const num = parseFloat(val); const r = allRecipes.find(i => i.id === activeRecipeId); if (num > 0 && r && r.primaryAmount) { currentScale = num / r.primaryAmount; updateDynamicUI(r); } }
+function scaleByFat(val) { currentFatType = val || null; const r = allRecipes.find(i => i.id === activeRecipeId); if (r) { updateDynamicUI(r); } }
 function setCategory(cat, el) { currentCategory = cat; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderNavList(); }
 function filterRecipes() { renderNavList(); }
 
@@ -1293,28 +1317,6 @@ async function uploadCoverBlob(blob) {
   } catch (err) { statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> שגיאה'; statusEl.style.color = '#e53e3e'; }
 }
 
-function calcQuickFat() {
-  const qty = parseFloat(document.getElementById('m-prim-qty').value);
-  if (!qty || qty <= 0) { alert("נא להזין קודם את הכמות (בגרמים) של המרכיב הראשי!"); return; }
-  
-  const type = document.getElementById('quick-fat-type').value;
-  let cals100 = 0, pro100 = 0, car100 = 0, fat100 = 0;
-  
-  switch(type) {
-    case 'beef_5': cals100 = 135; pro100 = 22; car100 = 0; fat100 = 5; break;
-    case 'beef_9': cals100 = 170; pro100 = 20; car100 = 0; fat100 = 9; break;
-    case 'beef_15': cals100 = 215; pro100 = 19; car100 = 0; fat100 = 15; break;
-    case 'beef_20': cals100 = 250; pro100 = 17; car100 = 0; fat100 = 20; break;
-    case 'cheese_5': cals100 = 95; pro100 = 10; car100 = 3; fat100 = 5; break;
-    case 'cheese_9': cals100 = 135; pro100 = 10; car100 = 3; fat100 = 9; break;
-  }
-  
-  const mult = qty / 100;
-  document.getElementById('m-cals').value = Math.round(cals100 * mult);
-  document.getElementById('m-protein').value = +(pro100 * mult).toFixed(1);
-  document.getElementById('m-carbs').value = +(car100 * mult).toFixed(1);
-  document.getElementById('m-fat').value = +(fat100 * mult).toFixed(1);
-}
 async function deleteRecipe(id) {
   if (isOffline || !navigator.onLine) { alert("מחיקת מתכון אינה אפשרית במצב לא מקוון (קריאה בלבד)."); return; }
   if (confirm("למחוק את המתכון הזה לצמיתות?")) {
@@ -1495,21 +1497,7 @@ checkSession();
         </div>
       </div>
       
-      <div style="background:#eef2ff; padding:12px; border-radius:8px; border:1px solid #c7d2fe; margin-bottom:15px;">
-        <label style="color:#4338ca; font-weight:bold; margin-bottom:6px; display:block;"><i class="fa-solid fa-calculator"></i> חישוב ערכים מהיר לפי שומן (לגרמים):</label>
-        <div style="display: flex; gap: 8px;">
-          <select id="quick-fat-type" class="form-control" style="flex:1;">
-            <option value="beef_5">בקר 5% שומן</option>
-            <option value="beef_9">בקר 9% שומן</option>
-            <option value="beef_15">בקר 15% שומן</option>
-            <option value="beef_20">בקר 20% שומן</option>
-            <option value="cheese_5">גבינה/חלב 5%</option>
-            <option value="cheese_9">גבינה/חלב 9%</option>
-          </select>
-          <button type="button" class="btn btn-green" onclick="calcQuickFat()">חשב</button>
-        </div>
-        <small style="color:#6b7280; margin-top:4px; display:block;">יחשב אוטומטית את הערכים עבור כמות <b>המרכיב הראשי</b> שהזנת למעלה.</small>
-      </div>
+
       <div class="form-row">
         <div class="form-group"><label>קלוריות:</label><input type="number" id="m-cals" class="form-control"></div>
         <div class="form-group"><label>חלבון (גרם):</label><input type="number" id="m-protein" class="form-control" step="0.1"></div>
