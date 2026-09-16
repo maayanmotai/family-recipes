@@ -18,6 +18,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.css">
+<script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
 
 <style>
   :root { 
@@ -1133,17 +1135,26 @@ function closeInfoModal() {
 }
 
 function startAppTour() {
-  showInfoModal("ברוכים הבאים!", "איזה כיף שהצטרפתם לספר המתכונים שלנו.<br><br>הכנו לכם סיור קצר כדי שתכירו את הפיצ'רים המרכזיים.", () => {
-    showInfoModal("ייבוא חכם (AI)", "הוספת מתכונים מעולם לא הייתה קלה יותר!<br>פשוט מצלמים מתכון מספר בישול או מדביקים טקסט מאתר, והמערכת שלנו תמלא את כל השדות בצורה אוטומטית.", () => {
-      showInfoModal("התאמת כמויות", "רוצים להכין כמות גדולה יותר לאורחים?<br>בתוך כל מתכון, תוכלו לשנות את מספר המנות – וכל המצרכים יתעדכנו אוטומטית לפי הכמות החדשה.", () => {
-        showInfoModal("התאמת אחוז שומן", "במתכוני בשר, תוכלו לשנות בקלות את אחוזי השומן (למשל מ-5% ל-20%) והמערכת תחשב מיד מחדש את כל הקלוריות והערכים התזונתיים של המנה.", () => {
-          showInfoModal("עוזר שף אישי", "בתוך כל מתכון, למטה, מחכה לכם 'השף של משפחת מוטאי'.<br>תוכלו לשאול אותו כל שאלה – האם אפשר להקפיא? במה אפשר להחליף מצרך מסוים? וכו'.", () => {
-            localStorage.setItem('tour_completed_' + currentUser.email, 'true');
-          }, 'סיימנו, תודה!');
-        }, 'הבנתי / הבא');
-      }, 'הבנתי / הבא');
-    }, 'הבנתי / הבא');
-  }, 'התחל סיור');
+  const driver = window.driver.js.driver;
+  const driverObj = driver({
+    showProgress: true,
+    doneBtnText: 'סיימנו!',
+    closeBtnText: 'סגור',
+    nextBtnText: 'הבא',
+    prevBtnText: 'הקודם',
+    steps: [
+      { element: '#btn-add-recipe', popover: { title: 'הוספת מתכון / AI', description: 'כאן תוכלו להוסיף מתכונים. נסו את הייבוא החכם - צלמו מתכון והוא יתמלא אוטומטית!' } },
+      { element: '.search-input-wrapper', popover: { title: 'חיפוש חכם', description: 'חפשו מתכונים לפי שם, רכיבים, או הוראות - הכל יסונן בזמן אמת.' } },
+      { element: '.category-chips', popover: { title: 'קטגוריות מומלצות', description: 'לחצו על קטגוריה כדי להציג רק את המתכונים השייכים אליה.' } },
+      { element: '.scaler-box', popover: { title: 'מחשבון כמויות', description: 'בלחיצה על כל מתכון, תוכלו לשנות כאן את כמות המנות. כל המצרכים יתעדכנו אוטומטית!' } },
+      { element: '.ai-chef-box', popover: { title: 'עוזר השף', description: 'שאלו את ה-AI בתחתית כל מתכון - האם אפשר להקפיא? מה התחליף המושלם? וכו\'.' } }
+    ],
+    onDestroyStarted: () => {
+      localStorage.setItem('tour_completed_' + currentUser.email, 'true');
+      driverObj.destroy();
+    }
+  });
+  driverObj.drive();
 }
 
 function toggleAiBox() {
