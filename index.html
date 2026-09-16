@@ -668,7 +668,7 @@ function getFavKey() { return 'my_favs_' + (currentUser ? currentUser.id : 'gues
 
 function getDefaultRecipeId() {
   if (!allRecipes || allRecipes.length === 0) return null;
-  const target = allRecipes.find(r => r.title.includes('קציצות עוף קינואה וירקות'));
+  const target = allRecipes.find(r => r.title.includes('קינואה') && r.title.includes('קציצות'));
   return target ? target.id : allRecipes[0].id;
 }
 
@@ -879,6 +879,7 @@ function renderActiveRecipe() {
         <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="shareToWhatsApp()" style="border-color:#25D366; color:#25D366;" title="שתף לווטסאפ">
           <i class="fa-brands fa-whatsapp" style="font-size:1rem;"></i>
         </button>
+
         <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="toggleFavorite('${escapeHTML(r.id)}')" style="border-color:${isFav ? '#e53e3e' : 'var(--border)'}; opacity:${isOffline ? '0.6' : '1'};" title="${isOffline ? 'סימון מועדפים אינו זמין במצב לא מקוון' : 'מועדפים'}">
           <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart" style="color:${isFav ? '#e53e3e' : 'var(--text-light)'}; font-size:1rem;"></i>
         </button>
