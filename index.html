@@ -839,7 +839,7 @@ function renderActiveRecipe() {
     primaryControl = `<div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label><div class="scaler-input-wrap"><input type="number" id="scaler-primary-input" value="${displayPrimary}" step="any" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div></div>`;
     
     const pName = r.primaryName.toLowerCase();
-    const isDairy = (pName.includes('חלב') || pName.includes('גבינ') || pName.includes('שמנת') || pName.includes('יוגורט') || pName.includes('חמאה'));
+    const isDairy = (pName.includes('חלב') || pName.includes('גבינ') || pName.includes('שמנת') || pName.includes('יוגורט') || pName.includes('חמאה') || pName.includes('קוטג') || pName.includes('ריקוטה') || pName.includes('מוצרלה') || pName.includes('מסקרפונה') || pName.includes('פרמזן') || pName.includes('בולגרית') || pName.includes('צפתית'));
     let fatOptions = `<option value="">לפי המתכון</option>`;
     if (isDairy) {
       const arr = [1,3,5,9,12,15,22,28,32];
@@ -921,7 +921,8 @@ function getDynamicHTML(r, currentScale) {
   const scaledPortions = (r.basePortions * currentScale);
   let cals = 0, protein = 0, carbs = 0, fat = 0;
   if (currentFatType && r.primaryAmount) {
-    const qty = (r.primaryAmount * currentScale);
+    let qty = (r.primaryAmount * currentScale);
+    if (r.primaryUnit && (r.primaryUnit.includes('קילו') || r.primaryUnit.toLowerCase() === 'kg')) qty *= 1000;
     let c100 = 0, p100 = 0, ca100 = 0, f100 = 0;
     switch(currentFatType) {
       case 'meat_5': c100=135; p100=22; ca100=0; f100=5; break;
