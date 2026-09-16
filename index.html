@@ -264,6 +264,7 @@
     </div>
     <div class="app-actions">
       <button id="btn-add-recipe" class="btn btn-green" onclick="openAddModal()"><i class="fa-solid fa-plus"></i> הוסף מתכון</button>
+      <button id="btn-manage-users" class="btn btn-light" onclick="manageUsers()" style="display:none; color: #4f46e5; border-color: #c7d2fe;"><i class="fa-solid fa-users"></i> נהל משתמשים</button>
       <button id="btn-export" class="btn btn-light" onclick="exportData()" style="display:none;"><i class="fa-solid fa-download"></i> גיבוי</button>
       <button id="btn-import" class="btn btn-light" onclick="document.getElementById('import-file').click()" style="display:none;"><i class="fa-solid fa-upload"></i> שחזור</button>
       <button class="btn btn-logout" onclick="handleLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> התנתק</button>
@@ -460,8 +461,28 @@ async function handleSignup() {
   if(!email || password.length < 6) { msgEl.innerText = "נא להזין אימייל וסיסמה."; return; }
   msgEl.innerText = "נרשם...";
   const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { name: name } } });
-  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else { 
-    msgEl.innerHTML = `<span style="color:#16a34a; font-weight:bold;">נרשמת בהצלחה!</span><br>החשבון ממתין לאישור מנהל.<br><button class="btn btn-green" style="margin-top:10px; width:100%;" onclick="window.open('https://wa.me/?text=${encodeURIComponent('היי! נרשמתי לאפליקציית המתכונים תחת השם ' + name + '. אשמח לאישור!')}', '_blank')"><i class="fa-brands fa-whatsapp"></i> שלח בקשת אישור בוואטסאפ</button>`;
+  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else {
+    const waMsg = `היי! נרשמתי לאפליקציית המתכונים תחת השם ${name}. המייל שלי הוא ${email}. לאישור המשתמש, לחץ על הקישור הבא:\n\n${window.location.origin}${window.location.pathname}?approve=${encodeURIComponent(email)}`;
+    msgEl.innerHTML = `<span style="color:#16a34a; font-weight:bold;">נרשמת בהצלחה!</span><br>החשבון ממתין לאישור מנהל.<br><button class="btn btn-green" style="margin-top:10px; width:100%;" onclick="window.open('https://wa.me/972546304777?text=${encodeURIComponent(waMsg)}', '_blank')"><i class="fa-brands fa-whatsapp"></i> שלח בקשת אישור בוואטסאפ</button>`;
+  }
+}
+
+async function manageUsers() {
+  if (!isMaster()) return;
+  const email = prompt("אישור משתמש חדש:\nהכנס את כתובת האימייל של המשתמש לאישור.\n(שים לב: הכי קל פשוט ללחוץ על הלינק שהמשתמש שולח לך בוואטסאפ!)");
+  if (!email) return;
+  const cleanEmail = email.trim().toLowerCase();
+  
+  if (!APPROVED_USERS.includes(cleanEmail)) {
+    APPROVED_USERS.push(cleanEmail);
+    try {
+      await supabaseClient.from('recipes').upsert({ id: 'approved_users', data: APPROVED_USERS });
+      alert("המשתמש אושר בהצלחה!");
+    } catch(err) {
+      alert("שגיאה באישור המשתמש: " + err.message);
+    }
+  } else {
+    alert("המשתמש כבר מאושר.");
   }
 }
 
@@ -486,8 +507,10 @@ function renderUserDisplay() {
 
   const expBtn = document.getElementById('btn-export');
   const impBtn = document.getElementById('btn-import');
+  const mngBtn = document.getElementById('btn-manage-users');
   if (expBtn) expBtn.style.display = isMaster() ? 'inline-flex' : 'none';
   if (impBtn) impBtn.style.display = (isMaster() && !isOffline) ? 'inline-flex' : 'none';
+  if (mngBtn) mngBtn.style.display = (isMaster() && !isOffline) ? 'inline-flex' : 'none';
 }
 
 function loginSuccess(user) {
