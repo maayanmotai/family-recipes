@@ -1166,7 +1166,8 @@ function startAppTour() {
       { element: '#wake-lock-btn', popover: { title: 'מצב מסך דולק', description: 'מבשלים עכשיו? לחצו על הנורה, והמסך שלכם יישאר דולק לתמיד, בלי שייכבה לכם באמצע עם ידיים מלוכלכות!' } },
       { element: '.ing-list', popover: { title: 'צ\'קליסט מצרכים והוראות', description: 'אפשר ללחוץ על כל מצרך או שלב בהכנה כדי לסמן עליו קו (וי) ולהישאר מעודכנים איפה אתם נמצאים.' } },
       { element: '.comments-section', popover: { title: 'תגובות ושיתופים', description: 'הכנתם מתכון? אתם יכולים להוסיף הערות ותגובות שיישמרו ויעזרו לפעם הבאה, או לשאר המשפחה.' } },
-      { element: '.ai-chef-box', popover: { title: 'עוזר השף', description: 'שאלו את ה-AI בתחתית כל מתכון - האם אפשר להקפיא? מה התחליף המושלם? וכו\'.' } }
+      { element: '.ai-chef-box', popover: { title: 'עוזר השף', description: 'שאלו את ה-AI בתחתית כל מתכון - האם אפשר להקפיא? מה התחליף המושלם? וכו\'.' } },
+      { popover: { title: 'איך מתקינים את האפליקציה?', description: '<strong>באייפון (Safari):</strong> לחצו על כפתור השיתוף בתחתית המסך (ריבוע עם חץ) ואז "הוסף למסך הבית".<br><br><strong>באנדרואיד (Chrome):</strong> לחצו על 3 הנקודות למעלה ואז "הוסף למסך הבית" או "התקן אפליקציה".' } }
     ],
     onDestroyStarted: () => {
       localStorage.setItem('tour_completed_' + currentUser.email, 'true');
@@ -1174,11 +1175,6 @@ function startAppTour() {
     }
   });
   driverObj.drive();
-}
-
-function toggleAiBox() {
-  const box = document.getElementById('ai-box');
-  box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }
 
 function previewAiImage(e) {
@@ -1310,12 +1306,31 @@ function openAddModal() {
   document.getElementById('new-recipe-form').reset(); document.getElementById('m-private').checked = false;
   document.querySelectorAll('input[name="m-tags"]').forEach(cb => cb.checked = false);
   if(currentUser && (currentUser.user_metadata?.name || currentUser.email)) { document.getElementById('m-author').value = currentUser.user_metadata?.name || currentUser.email.split('@')[0]; }
-  clearAiImage(); document.getElementById('ai-input-text').value = ''; document.getElementById('ai-box').style.display = 'none';
+  clearAiImage(); document.getElementById('ai-input-text').value = ''; 
   document.getElementById('upload-status').style.display = 'none'; 
   const m = document.getElementById('add-modal');
   m.classList.add('open');
   const mc = m.querySelector('.modal-content');
   if (mc) mc.scrollTop = 0;
+  
+  // Mini-tour for the Add Recipe modal
+  if (!localStorage.getItem('tour_add_modal_completed_' + currentUser?.email)) {
+    setTimeout(() => {
+      const driver = window.driver.js.driver;
+      const driverObj = driver({
+        showProgress: false,
+        doneBtnText: 'הבנתי',
+        steps: [
+          { element: '.modal-box > div:nth-child(2)', popover: { title: 'הסוד שלנו: ייבוא חכם ✨', description: 'למה לכתוב הכל לבד? פשוט תעתיק לכאן מתכון מאתר אחר (או צלם תמונה של מתכון כתוב), וה-AI ימלא את כל הטופס למטה בשבילך בשנייה!' } }
+        ],
+        onDestroyStarted: () => {
+          localStorage.setItem('tour_add_modal_completed_' + currentUser?.email, 'true');
+          driverObj.destroy();
+        }
+      });
+      driverObj.drive();
+    }, 300);
+  }
 }
 
 function openEditModal(id) {
@@ -1517,13 +1532,15 @@ checkSession();
       <h3 id="modal-heading"><i class="fa-solid fa-plus"></i> הוספת מתכון לספר</h3>
       <button class="close-btn" onclick="closeAddModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <strong style="color: #4338ca;"><i class="fa-solid fa-wand-magic-sparkles"></i> ייבוא חכם (AI) <span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 8pt; margin-right: 6px; font-weight: normal;">מומלץ!</span></strong>
-        <button type="button" class="btn btn-light" style="font-size: 8pt; padding: 6px 12px; border-color: #c7d2fe; color: #4338ca;" onclick="toggleAiBox()">הצג / הסתר</button>
-      </div>
-      <div id="ai-box" style="display: none; margin-top: 12px;">
-        <textarea id="ai-input-text" class="form-control" rows="4" placeholder="הדבק לכאן מתכון מבולגן, או לחלופין צלם תמונה של מתכון 👇..." style="margin-bottom: 10px; font-size: 9.5pt;"></textarea>
+      <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <strong style="color: #4338ca; font-size: 1.1em;"><i class="fa-solid fa-wand-magic-sparkles"></i> ייבוא מהיר ואוטומטי (מומלץ!)</strong>
+        </div>
+        <div style="font-size: 0.9em; color: #4b5563; margin-bottom: 12px; line-height: 1.4;">
+          <strong>הדרך הכי קלה להוסיף מתכון:</strong> פשוט צלמו אותו מספר בישול, בחרו תמונה, או הדביקו טקסט מאתר אחר, והבינה המלאכותית שלנו תסדר אותו לבד!
+        </div>
+        <div id="ai-box" style="display: block;">
+          <textarea id="ai-input-text" class="form-control" rows="4" placeholder="הדבק כאן טקסט של מתכון, או לחץ על סמל המצלמה כדי לצלם מתכון מספר..." style="margin-bottom: 10px; font-size: 9.5pt;"></textarea>
         
         <div style="display: flex; gap: 8px; margin-bottom: 10px;">
           <input type="file" id="ai-image-upload-camera" accept="image/*" capture="environment" style="display:none" onchange="previewAiImage(event)">
