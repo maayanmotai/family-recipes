@@ -632,6 +632,10 @@ function loginSuccess(user) {
   renderUserDisplay();
   initApp();
   
+  if (user && user.email && !localStorage.getItem('tour_completed_' + user.email)) {
+    setTimeout(() => { startAppTour(); }, 500);
+  }
+  
   setTimeout(() => {
     if (isMaster() && navigator.onLine && !localStorage.getItem('migrated_tags_v2')) {
       let changed = false;
@@ -1111,14 +1115,35 @@ async function toggleWakeLock(btnEl) {
 let aiImageData = null;
 let aiImageMime = null;
 
-function showInfoModal(title, text) {
+let infoModalCallback = null;
+function showInfoModal(title, text, callback = null, btnText = 'הבנתי, תודה!') {
   document.getElementById('info-modal-title').innerText = title;
-  document.getElementById('info-modal-text').innerText = text;
+  document.getElementById('info-modal-text').innerHTML = text;
+  document.getElementById('info-modal-btn').innerText = btnText;
   document.getElementById('info-modal').classList.add('open');
+  infoModalCallback = callback;
 }
 
 function closeInfoModal() {
   document.getElementById('info-modal').classList.remove('open');
+  if (infoModalCallback) {
+    infoModalCallback();
+    infoModalCallback = null;
+  }
+}
+
+function startAppTour() {
+  showInfoModal("ברוכים הבאים!", "איזה כיף שהצטרפתם לספר המתכונים שלנו.<br><br>הכנו לכם סיור קצר כדי שתכירו את הפיצ'רים המרכזיים.", () => {
+    showInfoModal("ייבוא חכם (AI)", "הוספת מתכונים מעולם לא הייתה קלה יותר!<br>פשוט מצלמים מתכון מספר בישול או מדביקים טקסט מאתר, והמערכת שלנו תמלא את כל השדות בצורה אוטומטית.", () => {
+      showInfoModal("התאמת כמויות", "רוצים להכין כמות גדולה יותר לאורחים?<br>בתוך כל מתכון, תוכלו לשנות את מספר המנות – וכל המצרכים יתעדכנו אוטומטית לפי הכמות החדשה.", () => {
+        showInfoModal("התאמת אחוז שומן", "במתכוני בשר, תוכלו לשנות בקלות את אחוזי השומן (למשל מ-5% ל-20%) והמערכת תחשב מיד מחדש את כל הקלוריות והערכים התזונתיים של המנה.", () => {
+          showInfoModal("עוזר שף אישי", "בתוך כל מתכון, למטה, מחכה לכם 'השף של משפחת מוטאי'.<br>תוכלו לשאול אותו כל שאלה – האם אפשר להקפיא? במה אפשר להחליף מצרך מסוים? וכו'.", () => {
+            localStorage.setItem('tour_completed_' + currentUser.email, 'true');
+          }, 'סיימנו, תודה!');
+        }, 'הבנתי / הבא');
+      }, 'הבנתי / הבא');
+    }, 'הבנתי / הבא');
+  }, 'התחל סיור');
 }
 
 function toggleAiBox() {
@@ -1411,7 +1436,7 @@ checkSession();
     <div style="font-size: 2.5rem; color: #4338ca; margin-bottom: 15px;"><i class="fa-solid fa-circle-info"></i></div>
     <h3 id="info-modal-title" style="margin-bottom: 12px; color: var(--text);"></h3>
     <p id="info-modal-text" style="color: var(--text-light); line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; font-size: 1.05rem;"></p>
-    <button class="btn btn-green" style="width: 100%; background: #4f46e5; border: none; font-size: 1.1rem; padding: 12px;" onclick="closeInfoModal()">הבנתי, תודה!</button>
+    <button id="info-modal-btn" class="btn btn-green" style="width: 100%; background: #4f46e5; border: none; font-size: 1.1rem; padding: 12px;" onclick="closeInfoModal()">הבנתי, תודה!</button>
   </div>
 </div>
 
