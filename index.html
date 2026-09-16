@@ -833,8 +833,9 @@ function renderActiveRecipe() {
 
   let primaryControl = '';
   if (r.primaryName && r.primaryAmount) {
-    const scaledPrimary = Math.round(r.primaryAmount * currentScale);
-    primaryControl = `<div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label><div class="scaler-input-wrap"><input type="number" id="scaler-primary-input" value="${scaledPrimary}" step="50" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div></div>`;
+    const scaledPrimary = (r.primaryAmount * currentScale);
+    const displayPrimary = (scaledPrimary % 1 === 0) ? scaledPrimary : Number(scaledPrimary.toFixed(2));
+    primaryControl = `<div class="scaler-item"><label>${escapeHTML(r.primaryName)}:</label><div class="scaler-input-wrap"><input type="number" id="scaler-primary-input" value="${displayPrimary}" step="any" oninput="scaleByPrimary(this.value)"><span class="scaler-unit">${escapeHTML(r.primaryUnit || 'גרם')}</span></div></div>`;
   }
 
 
@@ -1460,7 +1461,7 @@ checkSession();
         </div>
         <div class="form-group">
           <label>כמות במתכון המקורי: <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:10pt;" onclick="showInfoModal('כמות במתכון המקורי', 'כמה גרמים של המרכיב הראשי רשומים במתכון המקורי? לפי זה נחשב את היחס.')" title="כמות המרכיב הראשי במתכון המקורי"></i></label>
-          <input type="number" id="m-prim-qty" class="form-control" placeholder="לדוגמה: 500">
+          <input type="number" id="m-prim-qty" class="form-control" step="any" placeholder="לדוגמה: 1.5">
         </div>
       </div>
       <div class="form-row">
