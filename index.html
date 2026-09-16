@@ -1139,10 +1139,10 @@ function startAppTour() {
   const driverObj = driver({
     showProgress: true,
     doneBtnText: 'סיימנו!',
-    closeBtnText: 'סגור',
     nextBtnText: 'הבא',
     prevBtnText: 'הקודם',
     steps: [
+      { popover: { title: 'ברוכים הבאים! 👋', description: 'איזה כיף שהצטרפתם לספר המתכונים שלנו.<br><br>הכנו לכם סיור קצר כדי שתכירו את הפיצ\'רים המרכזיים שיעשו לכם חיים קלים במטבח.<br><br><span style="font-size:0.85em; opacity:0.8;">(אם תרצו לדלג לגמרי, אפשר ללחוץ על ה-X למעלה או מחוץ לתיבה)</span>' } },
       { element: '#btn-add-recipe', popover: { title: 'הוספת מתכון / AI', description: 'כאן תוכלו להוסיף מתכונים. נסו את הייבוא החכם - צלמו מתכון והוא יתמלא אוטומטית!' } },
       { element: '.search-input-wrapper', popover: { title: 'חיפוש חכם', description: 'חפשו מתכונים לפי שם, רכיבים, או הוראות - הכל יסונן בזמן אמת.' } },
       { element: '.category-chips', popover: { title: 'קטגוריות מומלצות', description: 'לחצו על קטגוריה כדי להציג רק את המתכונים השייכים אליה.' } },
