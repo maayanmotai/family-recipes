@@ -864,7 +864,7 @@ function renderActiveRecipe() {
         ${r.tags && r.tags.length ? r.tags.map(t => `<span class="recipe-tag">${escapeHTML(t)}</span>`).join('') : ''}
       </div>
       <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
-        <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="toggleWakeLock(this)" title="מצב בישול (השאר מסך דולק)">
+        <button id="wake-lock-btn" class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="toggleWakeLock(this)" title="מצב בישול (השאר מסך דולק)">
           <i class="fa-regular fa-lightbulb" style="font-size:1rem;"></i>
         </button>
         <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="window.print()" title="הדפסת מתכון">
@@ -1145,8 +1145,10 @@ function startAppTour() {
       { popover: { title: 'ברוכים הבאים! 👋', description: 'איזה כיף שהצטרפתם לספר המתכונים שלנו.<br><br>הכנו לכם סיור קצר כדי שתכירו את הפיצ\'רים המרכזיים שיעשו לכם חיים קלים במטבח.<br><br><span style="font-size:0.85em; opacity:0.8;">(אם תרצו לדלג לגמרי, אפשר ללחוץ על ה-X למעלה או מחוץ לתיבה)</span>' } },
       { element: '#btn-add-recipe', popover: { title: 'הוספת מתכון / AI', description: 'כאן תוכלו להוסיף מתכונים. נסו את הייבוא החכם - צלמו מתכון והוא יתמלא אוטומטית!' } },
       { element: '.search-input-wrapper', popover: { title: 'חיפוש חכם', description: 'חפשו מתכונים לפי שם, רכיבים, או הוראות - הכל יסונן בזמן אמת.' } },
-      { element: '.category-chips', popover: { title: 'קטגוריות מומלצות', description: 'לחצו על קטגוריה כדי להציג רק את המתכונים השייכים אליה.' } },
-      { element: '.scaler-box', popover: { title: 'מחשבון כמויות', description: 'בלחיצה על כל מתכון, תוכלו לשנות כאן את כמות המנות. כל המצרכים יתעדכנו אוטומטית!' } },
+      { element: '.scaler-box', popover: { title: 'התאמת כמויות ושומן', description: 'כאן תוכלו לשנות את כמות המנות, ובמתכוני בשר גם את אחוזי השומן. שימו לב - המערכת מחשבת ומתאימה אוטומטית את כל המצרכים והערכים התזונתיים לפי הבחירה שלכם!' } },
+      { element: '#wake-lock-btn', popover: { title: 'מצב מסך דולק', description: 'מבשלים עכשיו? לחצו על הנורה, והמסך שלכם יישאר דולק לתמיד, בלי שייכבה לכם באמצע עם ידיים מלוכלכות!' } },
+      { element: '.ing-list', popover: { title: 'צ\'קליסט מצרכים והוראות', description: 'אפשר ללחוץ על כל מצרך או שלב בהכנה כדי לסמן עליו קו (וי) ולהישאר מעודכנים איפה אתם נמצאים.' } },
+      { element: '.comments-section', popover: { title: 'תגובות ושיתופים', description: 'הכנתם מתכון? אתם יכולים להוסיף הערות ותגובות שיישמרו ויעזרו לפעם הבאה, או לשאר המשפחה.' } },
       { element: '.ai-chef-box', popover: { title: 'עוזר השף', description: 'שאלו את ה-AI בתחתית כל מתכון - האם אפשר להקפיא? מה התחליף המושלם? וכו\'.' } }
     ],
     onDestroyStarted: () => {
