@@ -1292,13 +1292,16 @@ function openCropModal(file, target) {
   if (currentCropper) { currentCropper.destroy(); currentCropper = null; }
   
   imgEl.onload = () => {
-    currentCropper = new Cropper(imgEl, {
-      aspectRatio: target === 'cover' ? 16 / 9 : NaN,
-      viewMode: 1,
-      dragMode: 'move',
-      autoCropArea: 1,
-      background: false,
-    });
+    setTimeout(() => {
+      if (currentCropper) currentCropper.destroy();
+      currentCropper = new Cropper(imgEl, {
+        aspectRatio: target === 'cover' ? 16 / 9 : NaN,
+        viewMode: 1,
+        dragMode: 'move',
+        autoCropArea: 1,
+        background: false,
+      });
+    }, 450);
   };
   imgEl.src = url;
 }
@@ -1441,7 +1444,7 @@ checkSession();
       <button class="close-btn" onclick="closeCropModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div style="flex: 1; min-height: 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-      <img id="crop-image" src="" style="display: block; max-width: 100%;">
+      <img id="crop-image" src="" style="display: block; max-width: 100%; max-height: 100%;">
     </div>
     <div style="display: flex; gap: 10px; margin-top: 15px;">
       <button class="btn btn-light" style="flex:1;" onclick="closeCropModal()">ביטול</button>
