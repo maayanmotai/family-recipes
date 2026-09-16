@@ -580,16 +580,6 @@ async function fetchCloudAndMerge() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     
-    // Auto-logout if not approved
-    if (!isApproved()) {
-       await supabaseClient.auth.signOut();
-       currentUser = null;
-       document.getElementById('auth-msg').innerHTML = `<span style="color:#ef4444; font-weight:bold;">החשבון שלך טרם אושר על ידי מנהל.</span>`;
-       document.getElementById('auth-screen').style.display = 'flex';
-       document.getElementById('app-container').style.display = 'none';
-       return;
-    }
-
     const adminRow = data.find(r => r.id === 'admins');
     if (adminRow && adminRow.data && Array.isArray(adminRow.data)) {
       if (JSON.stringify(adminRow.data) !== JSON.stringify(MASTER_EMAILS)) {
@@ -599,6 +589,16 @@ async function fetchCloudAndMerge() {
         renderNavList();
         renderActiveRecipe();
       }
+    }
+    
+    // Auto-logout if not approved
+    if (!isApproved()) {
+       await supabaseClient.auth.signOut();
+       currentUser = null;
+       document.getElementById('auth-msg').innerHTML = `<span style="color:#ef4444; font-weight:bold;">החשבון שלך טרם אושר על ידי מנהל.</span>`;
+       document.getElementById('auth-screen').style.display = 'flex';
+       document.getElementById('app-container').style.display = 'none';
+       return;
     }
 
     const masterRow = data.find(r => r.id === 'master_db');
