@@ -225,6 +225,22 @@
   const SUPABASE_URL = "https://xtaeopklnjxvvnpqhgyx.supabase.co";
   const SUPABASE_KEY = "sb_publishable_9-oJ5ZS2rxk65o9BUtiwoA_6rYxa-qz";
   const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+  if (supabaseClient) {
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setTimeout(async () => {
+          const newPassword = prompt("איפוס סיסמה:\nהכנס סיסמה חדשה (מינימום 6 תווים):");
+          if (newPassword && newPassword.length >= 6) {
+            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+            if (error) alert("שגיאה בעדכון הסיסמה: " + error.message);
+            else { alert("הסיסמה עודכנה בהצלחה! ניתן כעת להתחבר."); window.location.hash = ''; window.location.reload(); }
+          } else {
+            alert("הסיסמה קצרה מדי או שהאיפוס בוטל.");
+          }
+        }, 500);
+      }
+    });
+  }
 </script>
 </head>
 <body>
@@ -440,8 +456,10 @@ async function handleForgotPassword() {
   const msgEl = document.getElementById('auth-msg');
   if(!email) { msgEl.innerText = "נא להזין אימייל בשדה כדי לשחזר סיסמה."; return; }
   msgEl.innerText = "שולח קישור לאיפוס...";
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else { msgEl.innerText = "נשלח! בדוק את תיבת המייל שלך (וגם בספאם)."; }
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else { 
+    msgEl.innerHTML = `נשלח לינק! בדוק במייל (וגם בספאם).<br><span style="font-size:8pt; opacity:0.8;">שים לב: מטעמי אבטחה, השרת מאפשר לשלוח בקשת שחזור אחת בכל 60 שניות. אם תלחץ שוב מיד השרת לא ישלח שוב.</span>`; 
+  }
 }
 
 async function handleLogin() {
@@ -467,22 +485,92 @@ async function handleSignup() {
   }
 }
 
-async function manageUsers() {
-  if (!isMaster()) return;
-  const email = prompt("אישור משתמש חדש:\nהכנס את כתובת האימייל של המשתמש לאישור.\n(שים לב: הכי קל פשוט ללחוץ על הלינק שהמשתמש שולח לך בוואטסאפ!)");
+function closeManageUsersModal() {
+  document.getElementById('manage-users-modal').classList.remove('open');
+}
+
+async function approveUserEmail(email) {
   if (!email) return;
   const cleanEmail = email.trim().toLowerCase();
-  
   if (!APPROVED_USERS.includes(cleanEmail)) {
     APPROVED_USERS.push(cleanEmail);
     try {
       await supabaseClient.from('recipes').upsert({ id: 'approved_users', data: APPROVED_USERS });
-      alert("המשתמש אושר בהצלחה!");
-    } catch(err) {
-      alert("שגיאה באישור המשתמש: " + err.message);
+      alert("המשתמש " + cleanEmail + " אושר בהצלחה!");
+      document.getElementById('manual-approve-email').value = '';
+      manageUsers(); // Refresh list
+    } catch(err) { alert("שגיאה: " + err.message); }
+  } else { alert("המשתמש כבר מאושר."); }
+}
+
+async function removeUser(userId, email) {
+  if (!confirm(`האם אתה בטוח שברצונך למחוק לחלוטין את המשתמש ${email}?`)) return;
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data, error } = await supabaseClient.functions.invoke('admin-api', {
+      body: { action: 'delete_user', userId: userId },
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    });
+    if (error) throw error;
+    
+    // Also remove from approved
+    if (APPROVED_USERS.includes(email)) {
+      APPROVED_USERS = APPROVED_USERS.filter(e => e !== email);
+      await supabaseClient.from('recipes').upsert({ id: 'approved_users', data: APPROVED_USERS });
     }
-  } else {
-    alert("המשתמש כבר מאושר.");
+    
+    alert("המשתמש נמחק בהצלחה.");
+    manageUsers(); // Refresh list
+  } catch(err) { alert("שגיאה במחיקת המשתמש: " + err.message); }
+}
+
+async function manageUsers() {
+  if (!isMaster()) return;
+  const modal = document.getElementById('manage-users-modal');
+  modal.classList.add('open');
+  const contentEl = document.getElementById('manage-users-content');
+  contentEl.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-light);"><i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים מהשרת...</div>';
+  
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data, error } = await supabaseClient.functions.invoke('admin-api', {
+      body: { action: 'list_users' },
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    });
+    
+    if (error) throw error;
+    const users = data.users || [];
+    
+    let html = '<table style="width:100%; border-collapse:collapse; font-size:9.5pt;">';
+    html += '<tr style="border-bottom:2px solid var(--border);"><th style="text-align:right; padding:8px;">שם/מייל</th><th style="text-align:right; padding:8px;">סטטוס</th><th style="text-align:right; padding:8px;">תאריך הצטרפות</th><th style="text-align:center; padding:8px;">פעולות</th></tr>';
+    
+    users.forEach(u => {
+      const email = u.email;
+      const name = u.user_metadata?.name || '';
+      const isAppr = APPROVED_USERS.includes(email) || MASTER_EMAILS.includes(email);
+      const isMstr = MASTER_EMAILS.includes(email);
+      const joined = new Date(u.created_at).toLocaleDateString('he-IL');
+      
+      const statusBadge = isMstr ? '<span style="background:#eef2ff; color:#4f46e5; padding:2px 6px; border-radius:12px; font-weight:bold;">מנהל</span>' :
+                          isAppr ? '<span style="background:#dcfce7; color:#166534; padding:2px 6px; border-radius:12px;">מאושר</span>' :
+                                   '<span style="background:#fee2e2; color:#991b1b; padding:2px 6px; border-radius:12px;">ממתין</span>';
+      
+      const actionBtn = isMstr ? '' :
+                        (!isAppr ? `<button class="btn btn-green" style="padding:4px 8px; font-size:8pt;" onclick="approveUserEmail('${email}')">אשר</button>` : '') +
+                        `<button class="btn btn-light" style="padding:4px 8px; font-size:8pt; color:#dc2626;" onclick="removeUser('${u.id}', '${email}')"><i class="fa-solid fa-trash-can"></i></button>`;
+                        
+      html += `<tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:8px;"><strong>${escapeHTML(name)}</strong><br><span style="color:var(--text-light); font-size:8.5pt;">${escapeHTML(email)}</span></td>
+        <td style="padding:8px;">${statusBadge}</td>
+        <td style="padding:8px;">${joined}</td>
+        <td style="padding:8px; text-align:center; display:flex; gap:4px; justify-content:center;">${actionBtn}</td>
+      </tr>`;
+    });
+    html += '</table>';
+    contentEl.innerHTML = html;
+    
+  } catch(err) {
+    contentEl.innerHTML = `<div style="color:#dc2626; padding:20px; text-align:center;">שגיאה בטעינת משתמשים: ${err.message}</div>`;
   }
 }
 
@@ -1227,6 +1315,27 @@ checkSession();
     <h3 id="info-modal-title" style="margin-bottom: 12px; color: var(--text);"></h3>
     <p id="info-modal-text" style="color: var(--text-light); line-height: 1.6; margin-bottom: 25px; white-space: pre-wrap; font-size: 1.05rem;"></p>
     <button class="btn btn-green" style="width: 100%; background: #4f46e5; border: none; font-size: 1.1rem; padding: 12px;" onclick="closeInfoModal()">הבנתי, תודה!</button>
+  </div>
+</div>
+
+<!-- Modal: Manage Users -->
+<div class="modal-overlay" id="manage-users-modal" style="z-index: 10000;">
+  <div class="modal-box" style="max-width: 650px;">
+    <div class="modal-header">
+      <h3 style="margin-bottom: 0;"><i class="fa-solid fa-users"></i> ניהול משתמשים</h3>
+      <button class="close-btn" onclick="closeManageUsersModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    
+    <div id="manage-users-content" style="max-height: 60vh; overflow-y: auto;">
+      <div style="text-align:center; padding:20px; color:var(--text-light);"><i class="fa-solid fa-spinner fa-spin"></i> טוען נתונים...</div>
+    </div>
+    
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border);">
+      <div style="display:flex; gap:10px;">
+        <input type="email" id="manual-approve-email" class="form-control" placeholder="הכנס אימייל לאישור ידני">
+        <button class="btn btn-green" onclick="approveUserEmail(document.getElementById('manual-approve-email').value)"><i class="fa-solid fa-check"></i> אישור משתמש</button>
+      </div>
+    </div>
   </div>
 </div>
 
