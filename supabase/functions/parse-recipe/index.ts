@@ -42,6 +42,7 @@ The required JSON format is EXACTLY:
   "basePortions": "Number of portions (number, default to 1 if unknown)",
   "primaryName": "The main ingredient used for dynamic scaling, usually flour, meat, or the most prominent item (string, Hebrew, optional)",
   "primaryAmount": "The numerical amount of the primary ingredient (number, optional)",
+  "primaryUnit": "The unit for primaryAmount (string, Hebrew, MUST be one of: 'גרם', 'קילו', 'מ״ל', 'ליטר', 'כוסות', 'יחידות'). Defaults to 'גרם' if unknown",
   "tags": ["Array of strings. ONLY include applicable tags from this exact list: 'טבעוני', 'צמחוני', 'ללא גלוטן', 'ללא תוספת סוכר'"],
   "nutrition": {
     "cals": "Total calories for the ENTIRE recipe (number, estimate based on ingredients)",

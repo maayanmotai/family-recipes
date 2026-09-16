@@ -1235,7 +1235,11 @@ async function processAiImport(btn) {
     alert("הניתוח הושלם בהצלחה! אנא עבור על הנתונים וודא שהכל תקין לפני השמירה.");
     toggleAiBox(); // close box
   } catch (err) {
-    alert("שגיאה בניתוח: " + err.message);
+    if (err.message && err.message.includes('non-2xx')) {
+      alert("שגיאה בניתוח: הפעולה לקחה יותר מדי זמן או שהתמונה מורכבת מדי. נסה לחתוך אזור קטן יותר מהתמונה.");
+    } else {
+      alert("שגיאה בניתוח: " + err.message);
+    }
   } finally {
     clearInterval(loadInt);
     btn.innerHTML = originalHtml;
@@ -1250,7 +1254,11 @@ function openAddModal() {
   document.querySelectorAll('input[name="m-tags"]').forEach(cb => cb.checked = false);
   if(currentUser && (currentUser.user_metadata?.name || currentUser.email)) { document.getElementById('m-author').value = currentUser.user_metadata?.name || currentUser.email.split('@')[0]; }
   clearAiImage(); document.getElementById('ai-input-text').value = ''; document.getElementById('ai-box').style.display = 'none';
-  document.getElementById('upload-status').style.display = 'none'; document.getElementById('add-modal').classList.add('open');
+  document.getElementById('upload-status').style.display = 'none'; 
+  const m = document.getElementById('add-modal');
+  m.classList.add('open');
+  const mc = m.querySelector('.modal-content');
+  if (mc) mc.scrollTop = 0;
 }
 
 function openEditModal(id) {
@@ -1265,7 +1273,10 @@ function openEditModal(id) {
   document.getElementById('m-ingredients').value = Array.isArray(r.ingredients) ? r.ingredients.map(ing => `${ing.name} | ${ing.amount !== undefined && ing.amount !== null ? ing.amount : ''} | ${ing.unit || ''}`.trim()).join('\n') : '';
   document.getElementById('m-instructions').value = Array.isArray(r.instructions) ? r.instructions.join('\n') : '';
   document.querySelectorAll('input[name="m-tags"]').forEach(cb => cb.checked = (r.tags || []).includes(cb.value));
-  document.getElementById('add-modal').classList.add('open');
+  const m = document.getElementById('add-modal');
+  m.classList.add('open');
+  const mc = m.querySelector('.modal-content');
+  if (mc) mc.scrollTop = 0;
 }
 
 function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
@@ -1277,17 +1288,19 @@ function openCropModal(file, target) {
   currentCropTarget = target;
   const url = URL.createObjectURL(file);
   const imgEl = document.getElementById('crop-image');
-  imgEl.src = url;
   document.getElementById('crop-modal').classList.add('open');
-  if (currentCropper) currentCropper.destroy();
-  setTimeout(() => {
+  if (currentCropper) { currentCropper.destroy(); currentCropper = null; }
+  
+  imgEl.onload = () => {
     currentCropper = new Cropper(imgEl, {
       aspectRatio: target === 'cover' ? 16 / 9 : NaN,
-      viewMode: 0,
+      viewMode: 1,
       dragMode: 'move',
       autoCropArea: 1,
+      background: false,
     });
-  }, 100);
+  };
+  imgEl.src = url;
 }
 
 function closeCropModal() {
@@ -1299,8 +1312,8 @@ function closeCropModal() {
 function confirmCrop() {
   if (!currentCropper) return;
   const isAi = currentCropTarget === 'ai';
-  const maxD = isAi ? 1024 : 1920;
-  const qual = isAi ? 0.7 : 0.85;
+  const maxD = isAi ? 800 : 1920;
+  const qual = isAi ? 0.6 : 0.85;
   const canvas = currentCropper.getCroppedCanvas({ maxWidth: maxD, maxHeight: maxD, fillColor: '#fff' });
   if (!canvas) { alert("שגיאה בחיתוך התמונה, נסה שוב."); return; }
   
@@ -1446,7 +1459,7 @@ checkSession();
     </div>
     <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <strong style="color: #4338ca;"><i class="fa-solid fa-wand-magic-sparkles"></i> ייבוא חכם וזיהוי אוטומטי (AI)</strong>
+        <strong style="color: #4338ca;"><i class="fa-solid fa-wand-magic-sparkles"></i> ייבוא חכם (AI) <span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 8pt; margin-right: 6px; font-weight: normal;">מומלץ!</span></strong>
         <button type="button" class="btn btn-light" style="font-size: 8pt; padding: 6px 12px; border-color: #c7d2fe; color: #4338ca;" onclick="toggleAiBox()">הצג / הסתר</button>
       </div>
       <div id="ai-box" style="display: none; margin-top: 12px;">
