@@ -145,6 +145,7 @@
   .recipe-meta-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
   .recipe-meta-header h2 { margin: 0; font-size: 1.6rem; font-weight: 800; color: var(--secondary); line-height: 1.2; display: flex; align-items: center; gap: 8px; }
   .author-tag { display: inline-flex; align-items: center; gap: 6px; background: #f5f2eb; color: var(--secondary-light); padding: 4px 12px; border-radius: 20px; font-size: 9pt; font-weight: 700; margin-top: 8px; }
+  .recipe-tag { display: inline-flex; align-items: center; gap: 4px; background: #e0f2fe; color: #0284c7; padding: 3px 10px; border-radius: 20px; font-size: 8pt; font-weight: 700; margin-top: 8px; margin-right: 6px; border: 1px solid #bae6fd; }
   
   /* Scaler */
   .scaler-box { background: #fbfaf9; border: 1px solid #eeebe5; border-radius: 12px; padding: 16px; margin-bottom: 24px; }
@@ -231,12 +232,22 @@
 <!-- מסך התחברות -->
 <div id="auth-screen">
   <div class="auth-box">
-    <h2><i class="fa-solid fa-lock" style="margin-left: 8px; opacity: 0.8;"></i>כניסה לספר המתכונים</h2>
+    <h2 id="auth-title"><i class="fa-solid fa-lock" style="margin-left: 8px; opacity: 0.8;"></i>כניסה לספר המתכונים</h2>
+    <input type="text" id="auth-name" placeholder="שם מלא (כפי שיופיע במתכונים)" style="display: none; margin-bottom: 12px;">
     <input type="email" id="auth-email" placeholder="אימייל">
     <input type="password" id="auth-password" placeholder="סיסמה (מינימום 6 תווים)">
     <div id="auth-msg" class="auth-msg"></div>
-    <button class="btn-green" onclick="handleLogin()">התחברות</button>
-    <button class="btn-light" onclick="handleSignup()">הרשמה למשתמש חדש</button>
+    
+    <div id="login-buttons" style="display:flex; flex-direction:column; gap:8px;">
+      <button class="btn-green" onclick="handleLogin()">התחברות</button>
+      <button class="btn-light" onclick="showSignupForm()">הרשמה למשתמש חדש</button>
+      <button class="btn-light" onclick="handleForgotPassword()" style="border:none; background:transparent; color:#6b7280; font-size:9pt; margin-top:4px;">שכחתי סיסמה</button>
+    </div>
+    
+    <div id="signup-buttons" style="display:none; flex-direction:column; gap:8px;">
+      <button class="btn-green" onclick="handleSignup()">בצע הרשמה</button>
+      <button class="btn-light" onclick="showLoginForm()" style="border:none; background:transparent; color:#6b7280;">חזור להתחברות</button>
+    </div>
   </div>
 </div>
 
@@ -290,14 +301,21 @@ let isOffline = !navigator.onLine;
 // ==============================================
 // 🌟 הגדרות מנהל המערכת (MASTER) 🌟
 let MASTER_EMAILS = []; 
+let APPROVED_USERS = [];
 try {
   const cachedAdmins = localStorage.getItem('cached_admins');
   if (cachedAdmins) MASTER_EMAILS = JSON.parse(cachedAdmins);
+  const cachedApproved = localStorage.getItem('cached_approved');
+  if (cachedApproved) APPROVED_USERS = JSON.parse(cachedApproved);
 } catch (e) {}
 // ==============================================
 
 function isMaster() {
   return currentUser && MASTER_EMAILS.includes(currentUser.email);
+}
+
+function isApproved() {
+  return isMaster() || (currentUser && APPROVED_USERS.includes(currentUser.email));
 }
 
 const defaultRecipes = [];
@@ -400,6 +418,31 @@ async function checkSession() {
   }
 }
 
+function showSignupForm() {
+  document.getElementById('auth-title').innerHTML = '<i class="fa-solid fa-user-plus" style="margin-left: 8px; opacity: 0.8;"></i>הרשמה למשתמש חדש';
+  document.getElementById('auth-name').style.display = 'block';
+  document.getElementById('login-buttons').style.display = 'none';
+  document.getElementById('signup-buttons').style.display = 'flex';
+  document.getElementById('auth-msg').innerText = '';
+}
+
+function showLoginForm() {
+  document.getElementById('auth-title').innerHTML = '<i class="fa-solid fa-lock" style="margin-left: 8px; opacity: 0.8;"></i>כניסה לספר המתכונים';
+  document.getElementById('auth-name').style.display = 'none';
+  document.getElementById('login-buttons').style.display = 'flex';
+  document.getElementById('signup-buttons').style.display = 'none';
+  document.getElementById('auth-msg').innerText = '';
+}
+
+async function handleForgotPassword() {
+  const email = document.getElementById('auth-email').value;
+  const msgEl = document.getElementById('auth-msg');
+  if(!email) { msgEl.innerText = "נא להזין אימייל בשדה כדי לשחזר סיסמה."; return; }
+  msgEl.innerText = "שולח קישור לאיפוס...";
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else { msgEl.innerText = "נשלח! בדוק את תיבת המייל שלך (וגם בספאם)."; }
+}
+
 async function handleLogin() {
   const email = document.getElementById('auth-email').value; const password = document.getElementById('auth-password').value;
   const msgEl = document.getElementById('auth-msg');
@@ -410,12 +453,16 @@ async function handleLogin() {
 }
 
 async function handleSignup() {
+  const name = document.getElementById('auth-name').value.trim();
   const email = document.getElementById('auth-email').value; const password = document.getElementById('auth-password').value;
   const msgEl = document.getElementById('auth-msg');
+  if(!name) { msgEl.innerText = "נא להזין שם מלא."; return; }
   if(!email || password.length < 6) { msgEl.innerText = "נא להזין אימייל וסיסמה."; return; }
   msgEl.innerText = "נרשם...";
-  const { data, error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else { msgEl.innerText = "נרשמת בהצלחה! מתחבר..."; loginSuccess(data.user); }
+  const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { name: name } } });
+  if (error) { msgEl.innerText = "שגיאה: " + error.message; } else { 
+    msgEl.innerHTML = `<span style="color:#16a34a; font-weight:bold;">נרשמת בהצלחה!</span><br>החשבון ממתין לאישור מנהל.<br><button class="btn btn-green" style="margin-top:10px; width:100%;" onclick="window.open('https://wa.me/?text=${encodeURIComponent('היי! נרשמתי לאפליקציית המתכונים תחת השם ' + name + '. אשמח לאישור!')}', '_blank')"><i class="fa-brands fa-whatsapp"></i> שלח בקשת אישור בוואטסאפ</button>`;
+  }
 }
 
 async function handleLogout() {
@@ -455,6 +502,30 @@ function loginSuccess(user) {
   document.getElementById('app-container').style.display = 'block';
   renderUserDisplay();
   initApp();
+  
+  setTimeout(() => {
+    if (isMaster() && navigator.onLine && !localStorage.getItem('migrated_tags_v2')) {
+      let changed = false;
+      allRecipes.forEach(r => {
+        if (!r.tags) {
+          r.tags = [];
+          const textToSearch = ((r.ingredients||[]).map(i=>i.name).join(' ') + ' ' + (r.instructions||[]).join(' ') + ' ' + r.title + ' ' + r.category).replace(/-/g, ' ');
+          const hasMeat = textToSearch.match(/בשר|עוף|דג|נקניק|הודו|שניצל|כבש|בקר|שומן/);
+          const hasDairy = textToSearch.match(/חלב|גבינ|חמאה|שמנת|יוגורט|קוטג/);
+          const hasGluten = textToSearch.match(/קמח|פסטה|פתיתים|לחם|פירורי לחם|בצק|סולת|בורגול/);
+          const hasSugar = textToSearch.match(/סוכר|דבש|סילאן|מייפל|שוקולד|ריבה/);
+          
+          if (!hasMeat && !hasDairy) r.tags.push('טבעוני');
+          else if (!hasMeat) r.tags.push('צמחוני');
+          if (!hasGluten) r.tags.push('ללא גלוטן');
+          if (!hasSugar) r.tags.push('ללא תוספת סוכר');
+          changed = true;
+        }
+      });
+      if (changed) { persistToCloud(); }
+      localStorage.setItem('migrated_tags_v2', 'true');
+    }
+  }, 5000);
 }
 
 function getLocalKey() { return 'my_recipes_db_shared'; }
@@ -488,9 +559,37 @@ async function fetchCloudAndMerge() {
   if (!navigator.onLine) return;
   if (!supabaseClient || !currentUser) return;
   try {
-    const { data, error } = await supabaseClient.from('recipes').select('*').in('id', ['master_db', 'fav_' + currentUser.id, 'admins']);
+    const { data, error } = await supabaseClient.from('recipes').select('*').in('id', ['master_db', 'fav_' + currentUser.id, 'admins', 'approved_users']);
     if (error || !data) return;
     
+    const approvedRow = data.find(r => r.id === 'approved_users');
+    if (approvedRow && approvedRow.data && Array.isArray(approvedRow.data)) {
+      APPROVED_USERS = approvedRow.data;
+      localStorage.setItem('cached_approved', JSON.stringify(APPROVED_USERS));
+    }
+    
+    // Check URL for approval logic (if admin clicked link from WhatsApp)
+    const urlParams = new URLSearchParams(window.location.search);
+    const approveEmail = urlParams.get('approve');
+    if (approveEmail && isMaster()) {
+      if (!APPROVED_USERS.includes(approveEmail)) {
+        APPROVED_USERS.push(approveEmail);
+        await supabaseClient.from('recipes').upsert({ id: 'approved_users', data: APPROVED_USERS });
+        alert(`המשתמש ${approveEmail} אושר בהצלחה!`);
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    // Auto-logout if not approved
+    if (!isApproved()) {
+       await supabaseClient.auth.signOut();
+       currentUser = null;
+       document.getElementById('auth-msg').innerHTML = `<span style="color:#ef4444; font-weight:bold;">החשבון שלך טרם אושר על ידי מנהל.</span>`;
+       document.getElementById('auth-screen').style.display = 'flex';
+       document.getElementById('app-container').style.display = 'none';
+       return;
+    }
+
     const adminRow = data.find(r => r.id === 'admins');
     if (adminRow && adminRow.data && Array.isArray(adminRow.data)) {
       if (JSON.stringify(adminRow.data) !== JSON.stringify(MASTER_EMAILS)) {
@@ -617,6 +716,7 @@ function renderActiveRecipe() {
       <div>
         <h2>${r.isPrivate ? '<i class="fa-solid fa-lock" style="font-size:1.2rem; color:#a0aec0; margin-left:8px;" title="מתכון פרטי"></i>' : ''}${escapeHTML(r.title)}</h2>
         <span class="author-tag"><i class="fa-solid fa-star"></i> מאת: ${escapeHTML(r.author)}</span>
+        ${r.tags && r.tags.length ? r.tags.map(t => `<span class="recipe-tag">${escapeHTML(t)}</span>`).join('') : ''}
       </div>
       <div style="display:flex; gap:4px; flex-wrap:wrap; align-items:center;">
         <button class="btn btn-light" style="padding: 0; width: 34px; height: 34px; min-width: 0;" onclick="toggleWakeLock(this)" title="מצב בישול (השאר מסך דולק)">
@@ -654,7 +754,10 @@ function renderActiveRecipe() {
         <div class="comment-bubble">
           <div class="comment-meta">
             <span class="comment-author">${escapeHTML(c.author)}</span>
-            <span>${new Date(c.timestamp).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'})}</span>
+            <span>
+              ${new Date(c.timestamp).toLocaleString('he-IL', {day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'})}
+              ${(!isOffline && (isMaster() || (currentUser && c.authorEmail === currentUser.email))) ? `<i class="fa-solid fa-trash-can" style="cursor:pointer; color:#ef4444; margin-right:8px;" onclick="deleteComment('${escapeHTML(r.id)}', '${escapeHTML(c.id)}')"></i>` : ''}
+            </span>
           </div>
           <div class="comment-text">${escapeHTML(c.text)}</div>
         </div>
@@ -738,9 +841,10 @@ async function addComment(recipeId) {
   const recipeIndex = allRecipes.findIndex(r => r.id === recipeId);
   if (recipeIndex === -1) return;
   
-  const author = (currentUser && currentUser.email) ? currentUser.email.split('@')[0] : 'אורח';
+  const author = (currentUser && (currentUser.user_metadata?.name || currentUser.email)) ? (currentUser.user_metadata?.name || currentUser.email.split('@')[0]) : 'אורח';
   const newComment = {
     id: 'c_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+    authorEmail: currentUser ? currentUser.email : '',
     author: author,
     text: text,
     timestamp: new Date().toISOString()
@@ -753,6 +857,26 @@ async function addComment(recipeId) {
   allRecipes[recipeIndex].updatedAt = new Date().toISOString();
   
   textInput.value = '';
+  renderActiveRecipe();
+  await persistToCloud();
+}
+
+async function deleteComment(recipeId, commentId) {
+  if (isOffline) { showInfoModal('שגיאה', 'לא ניתן למחוק ללא אינטרנט.'); return; }
+  if (!confirm('האם אתה בטוח שברצונך למחוק תגובה זו?')) return;
+  
+  const recipeIndex = allRecipes.findIndex(r => r.id === recipeId);
+  if (recipeIndex === -1 || !allRecipes[recipeIndex].comments) return;
+  
+  const cIndex = allRecipes[recipeIndex].comments.findIndex(c => c.id === commentId);
+  if (cIndex === -1) return;
+  
+  const c = allRecipes[recipeIndex].comments[cIndex];
+  if (c.authorEmail !== currentUser?.email && !isMaster()) return;
+  
+  allRecipes[recipeIndex].comments.splice(cIndex, 1);
+  allRecipes[recipeIndex].updatedAt = new Date().toISOString();
+  
   renderActiveRecipe();
   await persistToCloud();
 }
@@ -882,8 +1006,18 @@ async function processAiImport(btn) {
       body: payload
     });
 
-    if (error) throw error;
-    if (data && data.error) throw new Error(data.error);
+    if (error) {
+      if (error.message && (error.message.includes('503') || error.message.includes('500') || error.message.includes('עמוסים'))) {
+        throw new Error("השרתים עמוסים כרגע, אנא נסה שוב בעוד מספר רגעים.");
+      }
+      throw error;
+    }
+    if (data && data.error) {
+      if (data.error.includes('503') || data.error.includes('500') || data.error.includes('עמוסים')) {
+        throw new Error("השרתים עמוסים כרגע, אנא נסה שוב בעוד מספר רגעים.");
+      }
+      throw new Error(data.error);
+    }
     if (!data || !data.recipe) throw new Error("תשובה לא תקינה מהשרת.");
 
     const r = data.recipe;
@@ -926,7 +1060,8 @@ function openAddModal() {
   if (isOffline || !navigator.onLine) { alert("הוספת מתכון אינה אפשרית במצב לא מקוון (קריאה בלבד)."); return; }
   document.getElementById('modal-heading').innerHTML = '<i class="fa-solid fa-plus"></i> הוספת מתכון לספר'; document.getElementById('m-id').value = '';
   document.getElementById('new-recipe-form').reset(); document.getElementById('m-private').checked = false;
-  if(currentUser && currentUser.email) { document.getElementById('m-author').value = currentUser.email.split('@')[0]; }
+  document.querySelectorAll('input[name="m-tags"]').forEach(cb => cb.checked = false);
+  if(currentUser && (currentUser.user_metadata?.name || currentUser.email)) { document.getElementById('m-author').value = currentUser.user_metadata?.name || currentUser.email.split('@')[0]; }
   clearAiImage(); document.getElementById('ai-input-text').value = ''; document.getElementById('ai-box').style.display = 'none';
   document.getElementById('upload-status').style.display = 'none'; document.getElementById('add-modal').classList.add('open');
 }
@@ -942,6 +1077,7 @@ function openEditModal(id) {
   document.getElementById('m-cals').value = r.nutrition?.cals ?? ''; document.getElementById('m-protein').value = r.nutrition?.protein ?? ''; document.getElementById('m-carbs').value = r.nutrition?.carbs ?? ''; document.getElementById('m-fat').value = r.nutrition?.fat ?? '';
   document.getElementById('m-ingredients').value = Array.isArray(r.ingredients) ? r.ingredients.map(ing => `${ing.name} | ${ing.amount !== undefined && ing.amount !== null ? ing.amount : ''} | ${ing.unit || ''}`.trim()).join('\n') : '';
   document.getElementById('m-instructions').value = Array.isArray(r.instructions) ? r.instructions.join('\n') : '';
+  document.querySelectorAll('input[name="m-tags"]').forEach(cb => cb.checked = (r.tags || []).includes(cb.value));
   document.getElementById('add-modal').classList.add('open');
 }
 
@@ -1021,16 +1157,17 @@ async function saveNewRecipe(e) {
   const nutrition = { cals: parseFloat(document.getElementById('m-cals').value) || 0, protein: parseFloat(document.getElementById('m-protein').value) || 0, carbs: parseFloat(document.getElementById('m-carbs').value) || 0, fat: parseFloat(document.getElementById('m-fat').value) || 0 };
   const ingredients = document.getElementById('m-ingredients').value.split('\n').filter(l => l.trim()).map(l => { const parts = l.split('|'); return { name: parts[0]?.trim() || '', amount: parseFloat(parts[1]?.trim()) || parts[1]?.trim() || '', unit: parts[2]?.trim() || '' }; });
   const instructions = document.getElementById('m-instructions').value.split('\n').filter(l => l.trim());
+  const tags = Array.from(document.querySelectorAll('input[name="m-tags"]:checked')).map(cb => cb.value);
 
   if (editId) {
     const index = allRecipes.findIndex(item => item.id === editId);
     if (index !== -1) {
       const ownerId = allRecipes[index].ownerId || currentUser.id;
-      allRecipes[index] = { ...allRecipes[index], ownerId, title, author, category, imageUrl, isPrivate, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, nutrition, ingredients, instructions };
+      allRecipes[index] = { ...allRecipes[index], ownerId, title, author, category, imageUrl, isPrivate, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, tags, nutrition, ingredients, instructions };
       activeRecipeId = editId;
     }
   } else {
-    const newRecipe = { id: 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now()), ownerId: currentUser.id, isPrivate, title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, primaryUnit: 'גרם', isMeat: false, nutrition, ingredients, instructions };
+    const newRecipe = { id: 'rec_' + (window.crypto ? window.crypto.randomUUID() : Date.now()), ownerId: currentUser.id, isPrivate, title, author, category, imageUrl, basePortions: portions, primaryName: primName || null, primaryAmount: primQty, primaryUnit: 'גרם', isMeat: false, tags, nutrition, ingredients, instructions };
     allRecipes.unshift(newRecipe); activeRecipeId = newRecipe.id;
   }
   await persistToCloud(); closeAddModal(); document.getElementById('new-recipe-form').reset(); currentScale = 1.0; renderNavList(); renderActiveRecipe();
@@ -1096,8 +1233,8 @@ checkSession();
     </div>
     <div style="background: #eef2ff; border: 1px solid #c7d2fe; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <strong style="color: #4338ca;"><i class="fa-solid fa-wand-magic-sparkles"></i> ייבוא חכם (AI)</strong>
-        <button type="button" class="btn btn-light" style="font-size: 8pt; padding: 6px 12px; border-color: #c7d2fe; color: #4338ca;" onclick="toggleAiBox()">פתח / סגור</button>
+        <strong style="color: #4338ca;"><i class="fa-solid fa-wand-magic-sparkles"></i> ייבוא חכם וזיהוי אוטומטי (AI)</strong>
+        <button type="button" class="btn btn-light" style="font-size: 8pt; padding: 6px 12px; border-color: #c7d2fe; color: #4338ca;" onclick="toggleAiBox()">הצג / הסתר</button>
       </div>
       <div id="ai-box" style="display: none; margin-top: 12px;">
         <textarea id="ai-input-text" class="form-control" rows="4" placeholder="הדבק לכאן מתכון מבולגן, או לחלופין צלם תמונה של מתכון 👇..." style="margin-bottom: 10px; font-size: 9.5pt;"></textarea>
@@ -1132,7 +1269,16 @@ checkSession();
       </div>
       <div class="form-row">
         <div class="form-group"><label>קטגוריה:</label><select id="m-category" class="form-control"><option value="עיקריות">עיקריות</option><option value="תוספות">תוספות</option><option value="רטבים">רטבים</option><option value="קינוחים">קינוחים</option></select></div>
-        <div class="form-group"><label>מספר מנות בסיס:</label><input type="number" id="m-portions" class="form-control" min="0.5" step="0.5"></div>
+        <div class="form-group"><label>מספר מנות בסיס: <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:10pt;" onclick="showInfoModal('מספר מנות בסיס', 'הכמות המקורית שהמתכון נועד עבורה לפני השינוי הדינמי. למשל, אם המצרכים מספיקים ל-4 מנות, יש להקליד 4.')" title="הסבר על מנות בסיס"></i></label><input type="number" id="m-portions" class="form-control" min="0.5" step="0.5"></div>
+      </div>
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>תגיות:</label>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px;" id="m-tags-container">
+          <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"><input type="checkbox" name="m-tags" value="טבעוני"> טבעוני</label>
+          <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"><input type="checkbox" name="m-tags" value="צמחוני"> צמחוני</label>
+          <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"><input type="checkbox" name="m-tags" value="ללא גלוטן"> ללא גלוטן</label>
+          <label style="display: flex; align-items: center; gap: 4px; font-weight: normal;"><input type="checkbox" name="m-tags" value="ללא תוספת סוכר"> ללא תוספת סוכר</label>
+        </div>
       </div>
       <div class="form-group">
         <label>תמונה (URL או העלאה):</label>
@@ -1173,6 +1319,30 @@ checkSession();
     </form>
   </div>
 </div>
+<!-- Footer -->
+<footer style="margin-top: 40px; padding: 20px; border-top: 1px solid var(--border); text-align: center; color: var(--text-light); font-size: 9pt;">
+  <div>v1.2.0 &copy; משפחת מוטאי סניבר</div>
+  <div style="margin-top: 8px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;">
+    <a href="#" onclick="showInfoModal('הצהרת נגישות', 'אתר זה נבנה עם שימת דגש על נגישות לכלל המשתמשים, כולל תמיכה בניווט מקלדת וניגודיות צבעים. במידה ונתקלתם בבעיה, אנא פנו אלינו.')" style="color: var(--secondary-light); text-decoration: underline;">הצהרת נגישות</a>
+    <a href="#" onclick="showInfoModal('מדיניות פרטיות', 'כל המתכונים נשמרים בענן מאובטח. סיסמאות המשתמשים מוצפנות ולא ניתן לגשת אליהן. אנו לא מעבירים מידע לצד ג`.')" style="color: var(--secondary-light); text-decoration: underline;">מדיניות פרטיות</a>
+  </div>
+</footer>
+<!-- Cookies Banner -->
+<div id="cookie-banner" style="display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: #1f2937; color: #fff; padding: 12px 20px; z-index: 10000; box-shadow: 0 -4px 12px rgba(0,0,0,0.1); justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 9.5pt;">
+  <span style="flex: 1;">האתר משתמש בקובצי עוגיות (Cookies) ואחסון מקומי כדי לשמור את החיבור שלך ולאפשר עבודה ללא אינטרנט.</span>
+  <button onclick="acceptCookies()" style="background: #4f46e5; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap;">הבנתי ואישרתי</button>
+</div>
+
+<script>
+  if (!localStorage.getItem('cookies_accepted')) {
+    document.getElementById('cookie-banner').style.display = 'flex';
+  }
+  function acceptCookies() {
+    localStorage.setItem('cookies_accepted', 'true');
+    document.getElementById('cookie-banner').style.display = 'none';
+  }
+</script>
+
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
