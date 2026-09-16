@@ -1083,7 +1083,13 @@ async function askAiAssistant(recipeId) {
     });
     
     if (error || (data && data.error)) {
-      resEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i> שגיאה בתקשורת עם ה-AI. נסה שוב.';
+      const errObj = error || data?.error;
+      const errMsg = typeof errObj === 'object' ? JSON.stringify(errObj) : String(errObj);
+      if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('Quota') || errMsg.includes('RESOURCE_EXHAUSTED')) {
+        resEl.innerHTML = '<i class="fa-solid fa-clock" style="color:#e53e3e;"></i> הגענו למגבלת השימוש הזמנית (עומס מערכת). אנא המתן כדקה ונסה שוב.';
+      } else {
+        resEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i> שגיאה בתקשורת עם ה-AI. נסה שוב.';
+      }
       console.error(error || data?.error);
     } else {
       const ans = data?.answer || "לא התקבלה תשובה.";
@@ -1091,7 +1097,11 @@ async function askAiAssistant(recipeId) {
       inputEl.value = '';
     }
   } catch (err) {
-    resEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i> אירעה שגיאה. נסה שוב.';
+    if (err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('Quota') || err.message.includes('RESOURCE_EXHAUSTED'))) {
+      resEl.innerHTML = '<i class="fa-solid fa-clock" style="color:#e53e3e;"></i> הגענו למגבלת השימוש הזמנית (עומס מערכת). אנא המתן כדקה ונסה שוב.';
+    } else {
+      resEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#e53e3e;"></i> אירעה שגיאה. נסה שוב.';
+    }
     console.error(err);
   }
 }
@@ -1280,7 +1290,9 @@ async function processAiImport(btn) {
     alert("הניתוח הושלם בהצלחה! אנא עבור על הנתונים וודא שהכל תקין לפני השמירה.");
     toggleAiBox(); // close box
   } catch (err) {
-    if (err.message && err.message.includes('non-2xx')) {
+    if (err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('Quota') || err.message.includes('RESOURCE_EXHAUSTED'))) {
+      alert("הגענו למגבלת השימוש הזמנית של הבינה המלאכותית (עומס מערכת). אנא המתן כדקה ונסה שוב.");
+    } else if (err.message && err.message.includes('non-2xx')) {
       alert("שגיאה בניתוח: הפעולה לקחה יותר מדי זמן או שהתמונה מורכבת מדי. נסה לחתוך אזור קטן יותר מהתמונה.");
     } else {
       alert("שגיאה בניתוח: " + err.message);
