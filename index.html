@@ -1122,8 +1122,15 @@ async function processAiImport(btn) {
   }
   
   const originalHtml = btn.innerHTML;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> מנתח עם AI...';
   btn.disabled = true;
+  
+  const loadingTexts = ["קורא נתונים...", "מנתח טקסט...", "מסדר מצרכים...", "מחשב ערכים תזונתיים...", "עוד רגע מסיים..."];
+  let tIndex = 0;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${loadingTexts[tIndex]}`;
+  const loadInt = setInterval(() => {
+    tIndex = (tIndex + 1) % loadingTexts.length;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${loadingTexts[tIndex]}`;
+  }, 2500);
 
   try {
     const payload = { text: text };
@@ -1190,6 +1197,7 @@ async function processAiImport(btn) {
   } catch (err) {
     alert("שגיאה בניתוח: " + err.message);
   } finally {
+    clearInterval(loadInt);
     btn.innerHTML = originalHtml;
     btn.disabled = false;
   }
@@ -1285,6 +1293,28 @@ async function uploadCoverBlob(blob) {
   } catch (err) { statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> שגיאה'; statusEl.style.color = '#e53e3e'; }
 }
 
+function calcQuickFat() {
+  const qty = parseFloat(document.getElementById('m-prim-qty').value);
+  if (!qty || qty <= 0) { alert("נא להזין קודם את הכמות (בגרמים) של המרכיב הראשי!"); return; }
+  
+  const type = document.getElementById('quick-fat-type').value;
+  let cals100 = 0, pro100 = 0, car100 = 0, fat100 = 0;
+  
+  switch(type) {
+    case 'beef_5': cals100 = 135; pro100 = 22; car100 = 0; fat100 = 5; break;
+    case 'beef_9': cals100 = 170; pro100 = 20; car100 = 0; fat100 = 9; break;
+    case 'beef_15': cals100 = 215; pro100 = 19; car100 = 0; fat100 = 15; break;
+    case 'beef_20': cals100 = 250; pro100 = 17; car100 = 0; fat100 = 20; break;
+    case 'cheese_5': cals100 = 95; pro100 = 10; car100 = 3; fat100 = 5; break;
+    case 'cheese_9': cals100 = 135; pro100 = 10; car100 = 3; fat100 = 9; break;
+  }
+  
+  const mult = qty / 100;
+  document.getElementById('m-cals').value = Math.round(cals100 * mult);
+  document.getElementById('m-protein').value = +(pro100 * mult).toFixed(1);
+  document.getElementById('m-carbs').value = +(car100 * mult).toFixed(1);
+  document.getElementById('m-fat').value = +(fat100 * mult).toFixed(1);
+}
 async function deleteRecipe(id) {
   if (isOffline || !navigator.onLine) { alert("מחיקת מתכון אינה אפשרית במצב לא מקוון (קריאה בלבד)."); return; }
   if (confirm("למחוק את המתכון הזה לצמיתות?")) {
@@ -1463,6 +1493,22 @@ checkSession();
           <label>כמות במתכון המקורי: <i class="fa-solid fa-circle-info" style="cursor:pointer; opacity:0.6; font-size:10pt;" onclick="showInfoModal('כמות במתכון המקורי', 'כמה גרמים של המרכיב הראשי רשומים במתכון המקורי? לפי זה נחשב את היחס.')" title="כמות המרכיב הראשי במתכון המקורי"></i></label>
           <input type="number" id="m-prim-qty" class="form-control" step="any" placeholder="לדוגמה: 1.5">
         </div>
+      </div>
+      
+      <div style="background:#eef2ff; padding:12px; border-radius:8px; border:1px solid #c7d2fe; margin-bottom:15px;">
+        <label style="color:#4338ca; font-weight:bold; margin-bottom:6px; display:block;"><i class="fa-solid fa-calculator"></i> חישוב ערכים מהיר לפי שומן (לגרמים):</label>
+        <div style="display: flex; gap: 8px;">
+          <select id="quick-fat-type" class="form-control" style="flex:1;">
+            <option value="beef_5">בקר 5% שומן</option>
+            <option value="beef_9">בקר 9% שומן</option>
+            <option value="beef_15">בקר 15% שומן</option>
+            <option value="beef_20">בקר 20% שומן</option>
+            <option value="cheese_5">גבינה/חלב 5%</option>
+            <option value="cheese_9">גבינה/חלב 9%</option>
+          </select>
+          <button type="button" class="btn btn-green" onclick="calcQuickFat()">חשב</button>
+        </div>
+        <small style="color:#6b7280; margin-top:4px; display:block;">יחשב אוטומטית את הערכים עבור כמות <b>המרכיב הראשי</b> שהזנת למעלה.</small>
       </div>
       <div class="form-row">
         <div class="form-group"><label>קלוריות:</label><input type="number" id="m-cals" class="form-control"></div>
