@@ -524,6 +524,23 @@ async function removeUser(userId, email) {
   } catch(err) { alert("שגיאה במחיקת המשתמש: " + err.message); }
 }
 
+async function editUserName(userId, email, currentName) {
+  const newName = prompt(`ערוך שם עבור המשתמש ${email}:`, currentName || '');
+  if (newName === null || newName.trim() === currentName) return;
+  
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data, error } = await supabaseClient.functions.invoke('admin-api', {
+      body: { action: 'update_user', userId: userId, name: newName.trim() },
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    });
+    if (error) throw error;
+    
+    alert("שם המשתמש עודכן בהצלחה.");
+    manageUsers();
+  } catch(err) { alert("שגיאה בעדכון המשתמש: " + err.message); }
+}
+
 async function manageUsers() {
   if (!isMaster()) return;
   const modal = document.getElementById('manage-users-modal');
@@ -557,6 +574,7 @@ async function manageUsers() {
       
       const actionBtn = isMstr ? '' :
                         (!isAppr ? `<button class="btn btn-green" style="padding:4px 8px; font-size:8pt;" onclick="approveUserEmail('${email}')">אשר</button>` : '') +
+                        `<button class="btn btn-light" style="padding:4px 8px; font-size:8pt; color:#4f46e5;" onclick="editUserName('${u.id}', '${email}', '${escapeHTML(name)}')"><i class="fa-solid fa-pen"></i></button>` +
                         `<button class="btn btn-light" style="padding:4px 8px; font-size:8pt; color:#dc2626;" onclick="removeUser('${u.id}', '${email}')"><i class="fa-solid fa-trash-can"></i></button>`;
                         
       html += `<tr style="border-bottom:1px solid var(--border);">
