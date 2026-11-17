@@ -1,0 +1,24 @@
+name: Sync Master DB to Supabase
+
+on:
+  push:
+    paths:
+      - 'backups/backup_master.json'
+      - '.github/workflows/sync.yml'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upsert master_db to Supabase
+        run: |
+          curl -f -X POST 'https://xtaeopklnjxvvnpqhgyx.supabase.co/rest/v1/recipes' \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates" \
+            --data-binary @backups/backup_master.json
