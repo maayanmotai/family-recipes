@@ -5,6 +5,7 @@ on:
     paths:
       - 'backups/backup_master.json'
       - '.github/workflows/sync.yml'
+      - 'sync_supabase.js'
   workflow_dispatch:
 
 jobs:
@@ -14,11 +15,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Upsert master_db to Supabase
-        run: |
-          curl -f -X POST 'https://xtaeopklnjxvvnpqhgyx.supabase.co/rest/v1/recipes' \
-            -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-            -H "Content-Type: application/json" \
-            -H "Prefer: resolution=merge-duplicates" \
-            --data-binary @backups/backup_master.json
+        env:
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node sync_supabase.js
